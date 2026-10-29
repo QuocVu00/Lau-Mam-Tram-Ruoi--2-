@@ -26,7 +26,7 @@ export function AuthModal({ isOpen, onClose, returnUrl = "/" }: AuthModalProps) 
   const [customName, setCustomName] = useState("");
 
   const handleGoogleLogin = (selectedName?: string) => {
-    const finalName = (selectedName || customName || "Quốc Vũ (Google)").trim();
+    const finalName = (selectedName || customName || "Quốc Vũ").trim();
     const currentPath = typeof window !== "undefined" ? window.location.pathname : returnUrl;
     const encodedReturnUrl = encodeURIComponent(currentPath);
     const encodedName = encodeURIComponent(finalName);
@@ -36,8 +36,8 @@ export function AuthModal({ isOpen, onClose, returnUrl = "/" }: AuthModalProps) 
   };
 
   const sampleGoogleAccounts = [
-    { name: "Quốc Vũ (Google)", email: "quocvu.dev@gmail.com" },
-    { name: "Thảo Vy (Google)", email: "thaovy.cantho@gmail.com" },
+    { name: "Quốc Vũ", email: "quocvu.dev@gmail.com" },
+    { name: "Thảo Vy", email: "thaovy.cantho@gmail.com" },
     { name: "Nguyễn Minh Quân", email: "minhquan.hcm@gmail.com" },
   ];
 

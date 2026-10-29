@@ -1,24 +1,30 @@
 import React from "react";
-import { UtensilsCrossed, Clock, ShieldCheck } from "lucide-react";
+import { Clock, ShieldCheck } from "lucide-react";
 
 /**
  * COMPONENT FOOTER (src/components/client/Footer.tsx)
  * 
- * Chân trang hiển thị thông tin thương hiệu Lẩu Mắm Trăm Rưỡi.
+ * Chân trang hiển thị thông tin thương hiệu Lẩu Mắm Trăm Rưỡi (ảnh logo.jpg).
  * Toàn bộ thông tin thuần túy phục vụ thực khách (không chứa luồng Admin).
  */
 export function Footer() {
   return (
     <footer className="w-full bg-[#2A1810] text-[#FFF8F0] mt-auto pt-10 pb-20 sm:pb-10 border-t border-amber-900/40">
       <div className="max-w-4xl mx-auto px-4">
-        
+
         {/* Phần 1: Giới thiệu thương hiệu */}
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-8 pb-8 border-b border-stone-800">
-          
+
           <div className="space-y-3">
-            <div className="flex items-center gap-2">
-              <div className="w-8 h-8 rounded-lg bg-brand-primary flex items-center justify-center text-white">
-                <UtensilsCrossed className="w-4 h-4" />
+            <div className="flex items-center gap-2.5">
+              {/* Logo thương hiệu thực tế */}
+              <div className="w-9 h-9 rounded-xl overflow-hidden border border-amber-500/40 shadow-sm bg-white shrink-0">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src="/images/logo.jpg"
+                  alt="Logo Lẩu Mắm Trăm Rưỡi"
+                  className="w-full h-full object-cover"
+                />
               </div>
               <span className="font-extrabold text-base tracking-tight text-white">
                 LẨU MẮM TRĂM RƯỠI

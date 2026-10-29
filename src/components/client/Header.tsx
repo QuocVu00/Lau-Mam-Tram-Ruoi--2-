@@ -2,7 +2,7 @@
 
 import React, { useState } from "react";
 import Link from "next/link";
-import { UtensilsCrossed, Phone, LogOut, Edit2, Check, X } from "lucide-react";
+import { Phone, LogOut, Edit2, Check, X } from "lucide-react";
 
 /**
  * THUỘC TÍNH (PROPS) CỦA HEADER KHÁCH HÀNG
@@ -10,7 +10,7 @@ import { UtensilsCrossed, Phone, LogOut, Edit2, Check, X } from "lucide-react";
 interface HeaderProps {
   // Trạng thái đã đăng nhập của khách hàng
   isLoggedIn?: boolean;
-  // Tên hiển thị đầy đủ của khách hàng từ Google
+  // Tên hiển thị của khách hàng
   userName?: string;
   // Ảnh đại diện của khách (từ Google)
   userAvatar?: string;
@@ -25,10 +25,10 @@ interface HeaderProps {
 /**
  * COMPONENT HEADER DÀNH RIÊNG CHO KHÁCH HÀNG (src/components/client/Header.tsx)
  * 
- * Quy tắc tuyệt đối:
+ * Quy tắc:
  * - KHÔNG hiển thị bất kỳ nút/luồng Admin nào trên giao diện khách hàng.
- * - Hiển thị đúng và đầy đủ tên tài khoản Google của khách hàng.
- * - Cho phép khách hàng đổi tên hiển thị hoặc đăng xuất nhanh chóng.
+ * - Hiển thị tên tài khoản Google thuần túy (không có hậu tố (Google) hay (gg) ở sau).
+ * - Sử dụng Logo thương hiệu thực tế /images/logo.jpg.
  */
 export function Header({
   isLoggedIn = false,
@@ -38,8 +38,11 @@ export function Header({
   onUpdateName,
   onLogout,
 }: HeaderProps) {
+  // Lọc sạch hậu tố (Google) hoặc (gg) ở sau tên hiển thị
+  const cleanName = userName ? userName.replace(/\s*\((?:Google|gg|GG)\)/i, "").trim() : "";
+
   const [isEditing, setIsEditing] = useState(false);
-  const [editName, setEditName] = useState(userName || "");
+  const [editName, setEditName] = useState(cleanName);
   const [saving, setSaving] = useState(false);
 
   const handleSaveName = async () => {
@@ -56,11 +59,16 @@ export function Header({
   return (
     <header className="sticky top-0 z-30 w-full bg-white/95 backdrop-blur-md border-b border-amber-100 shadow-sm">
       <div className="max-w-4xl mx-auto px-4 h-16 flex items-center justify-between">
-
-        {/* 1. Logo & Tên thương hiệu */}
+        
+        {/* 1. Khu vực Logo & Tên thương hiệu (Dùng ảnh logo.jpg thực tế) */}
         <Link href="/" className="flex items-center gap-2.5 group">
-          <div className="w-10 h-10 rounded-xl bg-brand-primary flex items-center justify-center text-white shadow-md group-hover:scale-105 transition-transform">
-            <UtensilsCrossed className="w-5 h-5" />
+          <div className="w-10 h-10 rounded-xl overflow-hidden border border-amber-200/80 shadow-md group-hover:scale-105 transition-transform bg-white shrink-0">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src="/images/logo.jpg"
+              alt="Logo Lẩu Mắm Trăm Rưỡi"
+              className="w-full h-full object-cover"
+            />
           </div>
           <div>
             <div className="flex items-center gap-1.5">
@@ -74,7 +82,7 @@ export function Header({
           </div>
         </Link>
 
-        {/* 2. Khu vực Khách hàng & Hotline (Đã loại bỏ hoàn toàn nút Admin) */}
+        {/* 2. Khu vực Khách hàng & Hotline (Không chứa nút Admin) */}
         <div className="flex items-center gap-2 sm:gap-3">
 
           {/* Hotline hỗ trợ khách hàng */}
@@ -86,7 +94,7 @@ export function Header({
             <span>0901.019.868</span>
           </a>
 
-          {/* Luồng Khách hàng: Đăng nhập Google & hiển thị tên khách hàng Google */}
+          {/* Luồng Khách hàng: Đăng nhập Google & hiển thị tên khách hàng */}
           {isLoggedIn ? (
             <div className="flex items-center gap-1 sm:gap-1.5">
               {isEditing ? (
@@ -127,18 +135,18 @@ export function Header({
                     // eslint-disable-next-line @next/next/no-img-element
                     <img
                       src={userAvatar}
-                      alt={userName || "Google Avatar"}
+                      alt={cleanName || "Avatar"}
                       className="w-6 h-6 rounded-full border border-brand-primary/30 object-cover shadow-sm shrink-0"
                     />
                   ) : (
                     <div className="w-6 h-6 rounded-full bg-brand-primary text-white flex items-center justify-center font-bold text-[10px] shrink-0">
-                      {userName ? userName.charAt(0).toUpperCase() : "G"}
+                      {cleanName ? cleanName.charAt(0).toUpperCase() : "U"}
                     </div>
                   )}
 
-                  {/* Hiển thị tên tài khoản Google đầy đủ, không bị cắt ngắn */}
+                  {/* Hiển thị tên tài khoản Google thuần túy (không có hậu tố) */}
                   <span className="text-xs font-extrabold text-stone-900 whitespace-nowrap">
-                    {userName}
+                    {cleanName}
                   </span>
 
                   {/* Nút bấm chỉnh sửa tên nếu muốn đổi */}
@@ -146,10 +154,10 @@ export function Header({
                     <button
                       type="button"
                       onClick={() => {
-                        setEditName(userName || "");
+                        setEditName(cleanName);
                         setIsEditing(true);
                       }}
-                      title="Đổi tên hiển thị tài khoản Google"
+                      title="Đổi tên hiển thị"
                       className="p-1 rounded-full text-stone-400 hover:text-amber-700 hover:bg-amber-100/60 transition-colors"
                     >
                       <Edit2 className="w-2.5 h-2.5" />

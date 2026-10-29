@@ -330,7 +330,7 @@ Tệp `.env.example` hướng dẫn các thông số cần thiết:
 
 Các bước khởi tạo đã được tự động kiểm thử nghiêm ngặt:
 * ✅ **Lệnh `npm install`:** Cài đặt đầy đủ 124 thư viện thành công trong 1 phút.
-* ✅ **Lệnh `npx prisma db push`:** Tạo thành công tệp cơ sở dữ liệu `prisma/dev.db` và đồng bộ hoàn chỉnh 7 bảng.
+* ✅ **Lệnh `npx prisma db push` (Supabase Cloud):** Đồng bộ thành công 7 bảng lên máy chủ PostgreSQL đám mây của Supabase (hoàn toàn miễn phí, hỗ trợ đồng bộ dữ liệu nhóm thời gian thực).
 * ✅ **Lệnh `npm run build`:** Đóng gói ứng dụng thành công, vượt qua toàn bộ quy trình kiểm tra kiểu dữ liệu TypeScript và định tuyến tĩnh.
 
 ---
@@ -349,3 +349,5 @@ Hai công việc tiếp theo có thể bắt tay vào làm ngay:
 
 *(Tài liệu được lưu trữ trực tiếp tại `TaiLieu/huong_dan_khoi_tao_cau_truc_va_cau_hinh.md` để dễ dàng tra cứu).*
 
+
+pass word db: tF40QunHZJj3sIEq

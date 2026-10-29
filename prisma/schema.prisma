@@ -8,10 +8,12 @@ generator client {
 }
 
 datasource db {
-  // Mặc định dùng sqlite để tiện phát triển và chạy thử ngay lập tức không cần cấu hình server riêng.
-  // Khi chạy thực tế trên server thật, chỉ cần đổi provider thành "postgresql"
-  provider = "sqlite"
-  url      = env("DATABASE_URL")
+  // Sử dụng PostgreSQL trên Supabase
+  provider  = "postgresql"
+  // URL phục vụ các truy vấn ứng dụng thông qua Connection Pooler (PGBouncer)
+  url       = env("DATABASE_URL")
+  // URL kết nối trực tiếp phục vụ cho việc chạy Migrations hoặc lệnh prisma db push
+  directUrl = env("DIRECT_URL")
 }
 
 // ------------------------------------------------------------------------------

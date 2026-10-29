@@ -13,10 +13,10 @@ export function Footer() {
   return (
     <footer className="w-full bg-[#2A1810] text-[#FFF8F0] mt-auto pt-10 pb-20 sm:pb-10 border-t border-amber-900/40">
       <div className="max-w-4xl mx-auto px-4">
-        
+
         {/* Phần 1: Giới thiệu thương hiệu */}
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-8 pb-8 border-b border-stone-800">
-          
+
           <div className="space-y-3">
             <div className="flex items-center gap-2.5">
               {/* Logo thương hiệu thực tế */}
@@ -60,14 +60,6 @@ export function Footer() {
             <p className="text-xs text-stone-400 leading-relaxed">
               100% đánh giá thực tế từ khách hàng trải nghiệm tại bàn ăn.
             </p>
-            <div className="pt-1">
-              <Link
-                href="/admin"
-                className="inline-block text-[11px] text-stone-400 hover:text-amber-200 underline transition-colors"
-              >
-                Cổng Quản Trị Viên (Admin Dashboard) →
-              </Link>
-            </div>
           </div>
 
         </div>

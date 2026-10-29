@@ -1,0 +1,174 @@
+// ==============================================================================
+// THIẾT KẾ CƠ SỞ DỮ LIỆU PRISMA (prisma/schema.prisma)
+// Chuỗi nhà hàng Lẩu Mắm Trăm Rưỡi - Quản lý 7 bảng theo đặc tả kỹ thuật
+// ==============================================================================
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  // Mặc định dùng sqlite để tiện phát triển và chạy thử ngay lập tức không cần cấu hình server riêng.
+  // Khi chạy thực tế trên server thật, chỉ cần đổi provider thành "postgresql"
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// ------------------------------------------------------------------------------
+// BẢNG 1: Users (Khách hàng đăng nhập 1 chạm qua MXH)
+// ------------------------------------------------------------------------------
+model User {
+  id             String   @id @default(cuid()) // Mã định danh duy nhất của người dùng
+  oauth_provider String   // Nguồn đăng nhập: "GOOGLE" | "FACEBOOK" | "ZALO"
+  oauth_id       String   // ID tài khoản trả về từ MXH (unique kết hợp cùng provider)
+  display_name   String   // Tên hiển thị của khách (tự động lấy từ MXH)
+  avatar_url     String?  // Đường dẫn ảnh đại diện (tự động lấy từ MXH)
+  created_at     DateTime @default(now()) // Thời điểm tham gia lần đầu
+
+  // Quan hệ: Một User có thể có nhiều phiên đăng nhập, bài đánh giá và lượt tương tác
+  sessions  UserSession[]
+  reviews   Review[]
+  reactions ReviewReaction[]
+
+  @@unique([oauth_provider, oauth_id]) // Đảm bảo mỗi tài khoản MXH chỉ tạo 1 User duy nhất
+  @@map("users")
+}
+
+// ------------------------------------------------------------------------------
+// BẢNG 2: User_Sessions (Quản lý Cookie thiết bị & IP trong 20 ngày)
+// ------------------------------------------------------------------------------
+model UserSession {
+  id                 String    @id @default(cuid()) // Mã phiên làm việc
+  user_id            String?   // Khóa ngoại liên kết bảng User (có thể null nếu khách chưa đăng nhập)
+  cookie_token       String    @unique // Token lưu trong HTTP-Only Cookie và LocalStorage (20 ngày)
+  device_fingerprint String?   // Mã nhận diện trình duyệt/thiết bị (User-Agent, OS...)
+  ip_address         String?   // Địa chỉ IP lúc truy cập (dùng để phát hiện spam bot)
+  created_at         DateTime  @default(now()) // Thời điểm tạo phiên
+  expires_at         DateTime  // Hạn sử dụng của phiên (created_at + 20 ngày)
+
+  // Quan hệ
+  user      User?            @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  reviews   Review[]
+  reactions ReviewReaction[]
+
+  @@index([cookie_token]) // Đánh Index để tra cứu phiên cực nhanh từ Cookie của khách
+  @@index([user_id])
+  @@map("user_sessions")
+}
+
+// ------------------------------------------------------------------------------
+// BẢNG 3: Branches (Chi nhánh nhà hàng)
+// ------------------------------------------------------------------------------
+model Branch {
+  id             String   @id @default(cuid()) // Mã chi nhánh
+  name           String   // Tên chi nhánh (VD: Chi nhánh 1 - Quận Ninh Kiều, Cần Thơ)
+  address        String   // Địa chỉ chi tiết hiển thị cho khách
+  district_city  String?  // Tỉnh/Thành hoặc Quận/Huyện phục vụ bộ lọc tìm kiếm
+  google_map_url String?  // Đường dẫn dẫn đường mở trực tiếp Google Maps trên điện thoại
+  hotline        String?  // Số điện thoại / Zalo để khách gọi đặt bàn nhanh
+  open_hours     String?  @default("10:00 - 22:00") // Giờ hoạt động
+  cover_images   String?  // Chuỗi JSON lưu danh sách URL ảnh không gian quán
+  avg_rating     Float    @default(5.0) // Điểm sao trung bình (tự động tính lại khi có bài đánh giá mới/ẩn)
+  total_reviews  Int      @default(0)   // Tổng số đánh giá hợp lệ (PUBLIC) đang hiển thị
+  status         String   @default("ACTIVE") // Trạng thái: "ACTIVE" (Hoạt động) | "INACTIVE" (Tạm nghỉ)
+  created_at     DateTime @default(now())
+
+  // Quan hệ
+  reviews Review[]
+
+  @@index([status])
+  @@index([district_city])
+  @@map("branches")
+}
+
+// ------------------------------------------------------------------------------
+// BẢNG 4: Promotions (Chương trình Khuyến mãi)
+// ------------------------------------------------------------------------------
+model Promotion {
+  id         String   @id @default(cuid()) // Mã chương trình khuyến mãi
+  title      String   // Tiêu đề chương trình (VD: "Đi 4 Tính Tiền 3 - Khai Trương")
+  content    String   // Nội dung chi tiết thể lệ khuyến mãi
+  banner_url String   // Ảnh banner hiển thị dạng slider
+  scope      String   @default("GLOBAL") // Phạm vi: "GLOBAL" (Toàn hệ thống) | "BRANCH" (Chi nhánh cụ thể)
+  branch_ids String?  // Chuỗi JSON lưu mảng các Branch ID áp dụng (khi scope = "BRANCH")
+  start_at   DateTime // Thời điểm bắt đầu có hiệu lực
+  end_at     DateTime // Thời điểm hết hạn (quá giờ này tự động ẩn khỏi giao diện)
+  is_active  Boolean  @default(true) // Công tắc bật/tắt thủ công của Quản trị viên
+  created_at DateTime @default(now())
+
+  @@index([is_active, start_at, end_at]) // Đánh Index để tối ưu câu truy vấn lấy khuyến mãi đang hiệu lực
+  @@map("promotions")
+}
+
+// ------------------------------------------------------------------------------
+// BẢNG 5: Reviews (Bài đánh giá thực tế từ khách hàng tại bàn ăn)
+// ------------------------------------------------------------------------------
+model Review {
+  id         String   @id @default(cuid()) // Mã bài đánh giá
+  branch_id  String   // Chi nhánh được đánh giá
+  user_id    String   // Người dùng đăng bài (đã xác thực qua OAuth 1 chạm)
+  session_id String?  // Phiên thiết bị lúc đăng bài (phục vụ đối soát và cơ chế Shadowban)
+  rating     Int      // Số sao đánh giá (1 đến 5 sao)
+  comment    String   // Lời nhận xét, cảm nhận món ăn của khách
+  status     String   @default("PUBLIC") 
+  // Trạng thái kiểm duyệt:
+  // "PUBLIC": Hiển thị cho toàn bộ mọi người, tính vào điểm trung bình chi nhánh
+  // "SHADOW_HIDDEN": Ẩn thông minh - chỉ người đăng mới thấy bài của mình, khách khác không thấy, không tính điểm
+  // "DELETED": Xóa vĩnh viễn - biến mất hoàn toàn
+  created_at DateTime @default(now()) // Thời điểm đăng (dùng để sắp xếp Mới nhất lên đầu)
+
+  // Quan hệ
+  branch    Branch           @relation(fields: [branch_id], references: [id], onDelete: Cascade)
+  user      User             @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  session   UserSession?     @relation(fields: [session_id], references: [id], onDelete: SetNull)
+  media     ReviewMedia[]
+  reactions ReviewReaction[]
+
+  @@index([branch_id, status]) // Index phục vụ lọc review hợp lệ theo từng chi nhánh
+  @@index([created_at])        // Index phục vụ sắp xếp bài mới nhất nhanh chóng
+  @@index([user_id])
+  @@index([session_id])
+  @@map("reviews")
+}
+
+// ------------------------------------------------------------------------------
+// BẢNG 6: Review_Media (Hình ảnh & Video đính kèm bài đánh giá)
+// ------------------------------------------------------------------------------
+model ReviewMedia {
+  id             String   @id @default(cuid()) // Mã tệp media
+  review_id      String   // Thuộc bài đánh giá nào
+  media_type     String   // Loại tệp: "IMAGE" (ảnh .webp) | "VIDEO" (video .mp4)
+  file_url       String   // Đường dẫn tệp sau khi đã nén tối ưu
+  thumbnail_url  String?  // Ảnh thu nhỏ trích xuất từ giây thứ 1 (dành riêng cho Video)
+  process_status String   @default("READY") // Tiến trình xử lý ngầm: "PROCESSING" | "READY" | "FAILED"
+  created_at     DateTime @default(now())
+
+  // Quan hệ
+  review Review @relation(fields: [review_id], references: [id], onDelete: Cascade)
+
+  @@index([review_id])
+  @@index([process_status])
+  @@map("review_media")
+}
+
+// ------------------------------------------------------------------------------
+// BẢNG 7: Review_Reactions (Thả biểu tượng cảm xúc vào bài đánh giá)
+// ------------------------------------------------------------------------------
+model ReviewReaction {
+  id            String   @id @default(cuid()) // Mã lượt thả cảm xúc
+  review_id     String   // Thuộc bài đánh giá nào
+  user_id       String?  // Tài khoản người thả cảm xúc
+  session_id    String?  // Hoặc định danh qua phiên làm việc nếu chưa đăng nhập
+  reaction_type String   // Biểu tượng cảm xúc: "LIKE" | "HEART" | "YUM" (thèm chảy nước miếng) | "WOW"
+  created_at    DateTime @default(now())
+
+  // Quan hệ
+  review  Review       @relation(fields: [review_id], references: [id], onDelete: Cascade)
+  user    User?        @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  session UserSession? @relation(fields: [session_id], references: [id], onDelete: SetNull)
+
+  @@unique([review_id, user_id, reaction_type]) // Mỗi user chỉ thả 1 loại cảm xúc 1 lần trên 1 bài
+  @@index([review_id])
+  @@map("review_reactions")
+}
+

@@ -1,0 +1,50 @@
+{
+  "compilerOptions": {
+    // 1. Thư viện mục tiêu hỗ trợ các tính năng JavaScript hiện đại nhất
+    "lib": ["dom", "dom.iterable", "esnext"],
+    // 2. Cho phép biên dịch các file JavaScript thông thường cùng với TypeScript
+    "allowJs": true,
+    // 3. Bỏ qua việc kiểm tra kiểu trong các file thư viện node_modules để tăng tốc biên dịch
+    "skipLibCheck": true,
+    // 4. Bật chế độ kiểm tra nghiêm ngặt (Strict mode) để tránh các lỗi null/undefined tiềm ẩn
+    "strict": true,
+    // 5. Không xuất file JS sau khi biên dịch (Next.js sẽ tự đảm nhiệm khâu đóng gói này)
+    "noEmit": true,
+    // 6. Hỗ trợ import các module CommonJS một cách chuẩn mực
+    "esModuleInterop": true,
+    // 7. Sử dụng hệ thống module hiện đại chuẩn ES Module
+    "module": "esnext",
+    // 8. Cơ chế phân giải module kiểu Bundler (tương thích hoàn hảo với Next.js và Vite)
+    "moduleResolution": "bundler",
+    // 9. Cho phép import các file .json trực tiếp vào mã nguồn
+    "resolveJsonModule": true,
+    // 10. Đảm bảo mỗi file có thể được biên dịch độc lập mà không bị phụ thuộc vòng
+    "isolatedModules": true,
+    // 11. Hỗ trợ cú pháp JSX của React hiện đại (không cần import React from 'react' ở đầu file)
+    "jsx": "preserve",
+    // 12. Bật bộ nhớ đệm tăng tốc độ biên dịch lại khi code thay đổi (Incremental compilation)
+    "incremental": true,
+    // 13. Tích hợp plugin TypeScript riêng của Next.js để kiểm tra router và props
+    "plugins": [
+      {
+        "name": "next"
+      }
+    ],
+    // 14. Thiết lập đường dẫn viết tắt (Path Aliases):
+    // Thay vì viết import ... from "../../../components/Header"
+    // Chúng ta chỉ cần viết import ... from "@/components/Header"
+    "paths": {
+      "@/*": ["./src/*"]
+    }
+  },
+  "include": [
+    "next-env.d.ts",
+    "**/*.ts",
+    "**/*.tsx",
+    ".next/types/**/*.ts"
+  ],
+  "exclude": [
+    "node_modules"
+  ]
+}
+

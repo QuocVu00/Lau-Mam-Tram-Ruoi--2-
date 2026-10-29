@@ -1,0 +1,41 @@
+# ==========================================
+# CẤU HÌNH BỎ QUA CÁC TỆP TRONG GIT (.gitignore)
+# Giúp kho mã nguồn nhẹ, bảo mật thông tin nhạy cảm
+# ==========================================
+
+# 1. Thư mục chứa các gói thư viện cài đặt từ npm (rất nặng, tải lại bằng lệnh npm install)
+node_modules/
+/.pnp
+.pnp.js
+
+# 2. Thư mục build và cache của Next.js (được tạo tự động khi chạy dev hoặc build)
+.next/
+out/
+build/
+dist/
+
+# 3. Các tệp cấu hình chứa khóa bảo mật (API keys, DB password) - TUYỆT ĐỐI KHÔNG commit lên Git
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# 4. Cơ sở dữ liệu SQLite cục bộ (dùng khi test trên máy lập trình)
+prisma/*.db
+prisma/*.db-journal
+
+# 5. Tệp tạm và thư mục log của hệ thống và IDE
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.vscode/
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+.DS_Store
+Thumbs.db
+

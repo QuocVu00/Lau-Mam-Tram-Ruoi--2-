@@ -2,7 +2,7 @@
 
 import React from "react";
 import Link from "next/link";
-import { UtensilsCrossed, Phone, User as UserIcon } from "lucide-react";
+import { UtensilsCrossed, Phone, User as UserIcon, LogOut } from "lucide-react";
 
 /**
  * THUỘC TÍNH (PROPS) CỦA HEADER
@@ -16,6 +16,8 @@ interface HeaderProps {
   userAvatar?: string;
   // Hàm mở Popup Đăng nhập 1 chạm khi khách bấm vào nút đăng nhập
   onOpenAuthModal?: () => void;
+  // Hàm đăng xuất
+  onLogout?: () => void;
 }
 
 /**
@@ -30,6 +32,7 @@ export function Header({
   userName,
   userAvatar,
   onOpenAuthModal,
+  onLogout,
 }: HeaderProps) {
   return (
     <header className="sticky top-0 z-30 w-full bg-white/95 backdrop-blur-md border-b border-amber-100 shadow-sm">
@@ -41,7 +44,6 @@ export function Header({
             <UtensilsCrossed className="w-5 h-5" />
           </div>
           <div>
-            {/* Tên thương hiệu (đã bỏ huy hiệu 150K theo yêu cầu) */}
             <div className="flex items-center gap-1.5">
               <span className="font-extrabold text-base sm:text-lg text-brand-primary tracking-tight">
                 LẨU MẮM TRĂM RƯỠI
@@ -53,7 +55,7 @@ export function Header({
           </div>
         </Link>
 
-        {/* 2. Khu vực Hành động bên phải (Hotline & Đăng nhập) */}
+        {/* 2. Khu vực Hành động bên phải (Hotline, Admin & Đăng nhập) */}
         <div className="flex items-center gap-2">
           
           {/* Nút gọi hotline hỗ trợ nhanh */}
@@ -65,24 +67,45 @@ export function Header({
             <span>0988.150.150</span>
           </a>
 
+          {/* Nút vào trang Quản trị (Admin) để demo */}
+          <Link
+            href="/admin"
+            className="flex items-center gap-1 px-2.5 py-1.5 rounded-full bg-stone-900 hover:bg-stone-800 text-amber-400 text-[11px] font-bold transition-all shadow-sm"
+          >
+            <span>Admin</span>
+          </Link>
+
           {/* Nút Đăng nhập 1 chạm hoặc Avatar người dùng */}
           {isLoggedIn ? (
             <div className="flex items-center gap-2 pl-1">
-              {userAvatar ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img
-                  src={userAvatar}
-                  alt={userName || "Avatar"}
-                  className="w-8 h-8 rounded-full border border-brand-primary/30 object-cover shadow-sm"
-                />
-              ) : (
-                <div className="w-8 h-8 rounded-full bg-brand-primary/10 text-brand-primary flex items-center justify-center font-bold text-xs">
-                  {userName ? userName.charAt(0).toUpperCase() : "U"}
-                </div>
+              <div className="flex items-center gap-1.5 bg-amber-50/80 pl-1 pr-2.5 py-1 rounded-full border border-amber-200">
+                {userAvatar ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    src={userAvatar}
+                    alt={userName || "Avatar"}
+                    className="w-6 h-6 rounded-full border border-brand-primary/30 object-cover shadow-sm"
+                  />
+                ) : (
+                  <div className="w-6 h-6 rounded-full bg-brand-primary/10 text-brand-primary flex items-center justify-center font-bold text-[10px]">
+                    {userName ? userName.charAt(0).toUpperCase() : "U"}
+                  </div>
+                )}
+                <span className="text-xs font-bold text-stone-800 max-w-[90px] truncate">
+                  {userName}
+                </span>
+              </div>
+
+              {onLogout && (
+                <button
+                  type="button"
+                  onClick={onLogout}
+                  title="Đăng xuất"
+                  className="p-1.5 rounded-full hover:bg-rose-50 text-stone-400 hover:text-rose-600 transition-colors"
+                >
+                  <LogOut className="w-3.5 h-3.5" />
+                </button>
               )}
-              <span className="hidden sm:inline text-xs font-bold text-stone-800 max-w-[100px] truncate">
-                {userName}
-              </span>
             </div>
           ) : (
             <button
@@ -101,4 +124,3 @@ export function Header({
     </header>
   );
 }
-

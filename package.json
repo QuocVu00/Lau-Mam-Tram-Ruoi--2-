@@ -4,7 +4,9 @@
   "private": true,
   "description": "Hệ thống website chuỗi nhà hàng Lẩu Mắm Trăm Rưỡi - Mobile First, Auth 1 chạm, Quản trị review thông minh",
   "scripts": {
-    "dev": "next dev",
+    "clean": "node scripts/clean-dev.js",
+    "dev": "node scripts/clean-dev.js && next dev",
+    "prebuild": "node scripts/clean-dev.js",
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
@@ -32,4 +34,3 @@
     "typescript": "^5.6.3"
   }
 }
-

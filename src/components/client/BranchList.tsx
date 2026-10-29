@@ -22,6 +22,7 @@ export interface BranchItem {
 
 interface BranchListProps {
   branches: BranchItem[];
+  onSelectBranch?: (branchId: string) => void;
 }
 
 /**
@@ -29,12 +30,9 @@ interface BranchListProps {
  * 
  * Mục đích:
  * Hiển thị danh sách toàn bộ cơ sở thuộc chuỗi Lẩu Mắm Trăm Rưỡi.
- * 
- * Yêu cầu đặc tả BRD (Mục 1.1):
- * - Bộ lọc nhanh theo Tỉnh / Thành phố.
- * - Thẻ Card hiển thị: Tên, Địa chỉ, Điểm sao trung bình, Tổng số bài review, Trạng thái hoạt động.
+ * Nhấp vào chi nhánh sẽ hiển thị thông tin và đánh giá ngay tại trang khách hàng!
  */
-export function BranchList({ branches = [] }: BranchListProps) {
+export function BranchList({ branches = [], onSelectBranch }: BranchListProps) {
   // Trạng thái chọn Tỉnh/Thành trong bộ lọc
   const [selectedLocation, setSelectedLocation] = useState<string>("all");
 
@@ -49,11 +47,11 @@ export function BranchList({ branches = [] }: BranchListProps) {
   return (
     <section id="branches-section" className="py-6 px-4 max-w-4xl mx-auto w-full">
       
-      {/* Tiêu đề khu vực (đã bỏ phần hiển thị số lượng cơ sở theo yêu cầu) */}
+      {/* Tiêu đề khu vực */}
       <div className="flex items-center mb-3">
         <div className="flex items-center gap-1.5 text-xs font-black uppercase text-brand-primary tracking-wide">
           <Store className="w-3.5 h-3.5 text-brand-secondary" />
-          <span>Danh Sách Chi Nhánh</span>
+          <span>Danh Sách Chi Nhánh (Bấm để xem thông tin)</span>
         </div>
       </div>
 
@@ -84,7 +82,8 @@ export function BranchList({ branches = [] }: BranchListProps) {
           return (
             <div
               key={branch.id}
-              className="bg-white border border-stone-200/90 rounded-2xl p-5 shadow-sm hover:shadow-md transition-all flex flex-col justify-between"
+              onClick={() => onSelectBranch && onSelectBranch(branch.id)}
+              className="bg-white border border-stone-200/90 rounded-2xl p-5 shadow-sm hover:shadow-md hover:border-brand-primary/40 transition-all flex flex-col justify-between cursor-pointer group"
             >
               <div>
                 {/* Hàng trên: Trạng thái Đang mở cửa / Tạm nghỉ */}
@@ -119,7 +118,7 @@ export function BranchList({ branches = [] }: BranchListProps) {
                 </div>
 
                 {/* Tên cơ sở */}
-                <h3 className="font-extrabold text-base text-stone-900 tracking-tight leading-snug mb-2">
+                <h3 className="font-extrabold text-base text-stone-900 group-hover:text-brand-primary tracking-tight leading-snug mb-2 transition-colors">
                   {branch.name}
                 </h3>
 
@@ -136,15 +135,29 @@ export function BranchList({ branches = [] }: BranchListProps) {
                 </p>
               </div>
 
-              {/* Nút hành động xem chi tiết chi nhánh */}
+              {/* Nút hành động xem chi tiết chi nhánh ngay tại trang */}
               <div className="pt-3 border-t border-stone-100">
-                <Link
-                  href={`/branches/${branch.id}`}
-                  className="w-full flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl bg-amber-50 hover:bg-brand-primary text-brand-primary hover:text-white font-bold text-xs transition-colors"
-                >
-                  <span>Xem menu & Đánh giá chi nhánh</span>
-                  <ArrowRight className="w-3.5 h-3.5" />
-                </Link>
+                {onSelectBranch ? (
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onSelectBranch(branch.id);
+                    }}
+                    className="w-full flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl bg-amber-50 group-hover:bg-brand-primary text-brand-primary group-hover:text-white font-bold text-xs transition-colors shadow-sm"
+                  >
+                    <span>Xem menu & Đánh giá chi nhánh</span>
+                    <ArrowRight className="w-3.5 h-3.5" />
+                  </button>
+                ) : (
+                  <Link
+                    href={`/branches/${branch.id}`}
+                    className="w-full flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl bg-amber-50 hover:bg-brand-primary text-brand-primary hover:text-white font-bold text-xs transition-colors"
+                  >
+                    <span>Xem menu & Đánh giá chi nhánh</span>
+                    <ArrowRight className="w-3.5 h-3.5" />
+                  </Link>
+                )}
               </div>
             </div>
           );
@@ -154,4 +167,3 @@ export function BranchList({ branches = [] }: BranchListProps) {
     </section>
   );
 }
-

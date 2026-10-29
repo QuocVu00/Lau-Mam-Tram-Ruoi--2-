@@ -10,34 +10,37 @@ export async function GET(
   const code = searchParams.get("code");
   const state = searchParams.get("state");
 
-  // Giải mã state để lấy lại returnUrl ban đầu
+  // Giải mã state để lấy lại returnUrl và custom name nếu có
   let returnUrl = "/";
+  let customName: string | null = null;
+
   if (state) {
     try {
       const decoded = JSON.parse(Buffer.from(state, "base64url").toString("utf-8"));
       if (decoded.returnUrl) {
         returnUrl = decoded.returnUrl;
       }
-    } catch {
-      // nếu giải mã lỗi thì về trang chủ
-    }
+      if (decoded.name && decoded.name.trim() !== "") {
+        customName = decoded.name.trim();
+      }
+    } catch {}
   }
 
-  // Thông tin user mặc định hoặc giải lập nếu dev
-  let displayName = "Khách Hàng Lẩu Mắm";
+  // Thông tin user hiển thị đầy đủ, không bị cắt ngắn
+  let displayName = customName || "Nguyễn Minh Quân";
   let avatarUrl: string | null = "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&q=80";
   let oauthId = `user_${Date.now()}`;
 
   if (providerParam === "GOOGLE") {
-    displayName = "Khách Hàng Google";
+    displayName = customName || "Quốc Vũ (Google)";
     avatarUrl = "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150&q=80";
     oauthId = `google_sub_${code || Date.now()}`;
   } else if (providerParam === "ZALO") {
-    displayName = "Khách Hàng Zalo";
+    displayName = customName || "Anh Ba Miền Tây";
     avatarUrl = "https://images.unsplash.com/photo-1570295999919-56ceb5ecca61?w=150&q=80";
     oauthId = `zalo_id_${code || Date.now()}`;
   } else if (providerParam === "FACEBOOK") {
-    displayName = "Khách Hàng Facebook";
+    displayName = customName || "Minh Quân Lê";
     avatarUrl = "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=150&q=80";
     oauthId = `fb_id_${code || Date.now()}`;
   }
@@ -55,9 +58,6 @@ export async function GET(
     deviceFingerprint: userAgent,
   });
 
-  // Cơ chế lưu trữ đa tầng phía Trình duyệt (Client-side):
-  // 1. HTTP-Only Cookie (Max-Age 20 ngày)
-  // 2. LocalStorage & IndexedDB Backup token để khôi phục phiên nếu Safari xóa Cookie sau 7 ngày
   const htmlContent = `
 <!DOCTYPE html>
 <html>
@@ -65,11 +65,11 @@ export async function GET(
   <meta charset="utf-8">
   <title>Đang hoàn tất đăng nhập...</title>
 </head>
-<body style="font-family: system-ui, sans-serif; display: flex; align-items: center; justify-content: center; height: 100vh; margin: 0; background-color: #FAF6ED; color: #431407;">
+<body style="font-family: system-ui, sans-serif; display: flex; align-items: center; justify-content: center; height: 100vh; margin: 0; background-color: #FFF8F0; color: #431407;">
   <div style="text-align: center;">
-    <div style="width: 48px; height: 48px; border: 4px solid #EA580C; border-top-color: transparent; border-radius: 50%; animation: spin 1s linear infinite; margin: 0 auto 16px;"></div>
-    <h3 style="margin: 0 0 8px;">Đăng nhập thành công!</h3>
-    <p style="margin: 0; color: #78350F; font-size: 14px;">Đang tự động đưa bạn quay lại chi nhánh...</p>
+    <div style="width: 48px; height: 48px; border: 4px solid #A33A1B; border-top-color: transparent; border-radius: 50%; animation: spin 1s linear infinite; margin: 0 auto 16px;"></div>
+    <h3 style="margin: 0 0 8px; color: #A33A1B;">Đăng nhập Google thành công!</h3>
+    <p style="margin: 0; color: #78350F; font-size: 14px;">Xin chào <strong>${session.user?.displayName || displayName}</strong>. Đang đưa bạn quay lại...</p>
   </div>
   <style>
     @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
@@ -94,9 +94,7 @@ export async function GET(
     },
   });
 
-  // Thiết lập HTTP-Only Cookie 20 ngày
   response.headers.append("Set-Cookie", getSessionCookieHeader(session.cookieToken));
 
   return response;
 }
-

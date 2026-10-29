@@ -1,13 +1,11 @@
 import React from "react";
-import Link from "next/link";
 import { UtensilsCrossed, Clock, ShieldCheck } from "lucide-react";
 
 /**
  * COMPONENT FOOTER (src/components/client/Footer.tsx)
  * 
- * Mục đích:
- * Chân trang hiển thị thông tin thương hiệu Lẩu Mắm Trăm Rưỡi,
- * cam kết chất lượng chuẩn vị miền Tây và liên kết nhanh tới trang Quản trị (Admin).
+ * Chân trang hiển thị thông tin thương hiệu Lẩu Mắm Trăm Rưỡi.
+ * Toàn bộ thông tin thuần túy phục vụ thực khách (không chứa luồng Admin).
  */
 export function Footer() {
   return (
@@ -45,23 +43,15 @@ export function Footer() {
             </p>
           </div>
 
-          {/* Phần 3: Cam kết & Lối vào Quản trị */}
+          {/* Phần 3: Cam kết chất lượng minh bạch */}
           <div className="space-y-3">
             <h4 className="font-bold text-sm text-amber-200 flex items-center gap-2">
               <ShieldCheck className="w-4 h-4" />
               <span>Cam kết minh bạch</span>
             </h4>
             <p className="text-xs text-stone-400 leading-relaxed">
-              100% đánh giá thực tế từ khách hàng trải nghiệm tại bàn ăn.
+              100% đánh giá thực tế từ khách hàng trải nghiệm tại bàn ăn. Luôn nỗ lực đem lại hương vị thơm ngon và sự phục vụ chu đáo nhất.
             </p>
-            <div className="pt-1">
-              <Link
-                href="/admin"
-                className="inline-block text-[11px] text-stone-400 hover:text-amber-200 underline transition-colors"
-              >
-                Cổng Quản Trị Viên (Admin Dashboard) →
-              </Link>
-            </div>
           </div>
 
         </div>
@@ -75,4 +65,3 @@ export function Footer() {
     </footer>
   );
 }
-

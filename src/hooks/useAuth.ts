@@ -60,7 +60,29 @@ export function useAuth() {
     refreshUser();
   }, [refreshUser]);
 
-  // 2. Đăng xuất tài khoản
+  // 2. Cập nhật tên hiển thị tài khoản
+  const updateDisplayName = async (newDisplayName: string) => {
+    try {
+      const res = await fetch("/api/auth/profile", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ displayName: newDisplayName }),
+      });
+      const data = await res.json();
+      if (data.success && data.user) {
+        setUser(data.user);
+        if (typeof window !== "undefined") {
+          localStorage.setItem("lau_mam_user", JSON.stringify(data.user));
+        }
+        return { success: true };
+      }
+      return { success: false, error: data.error };
+    } catch (e: any) {
+      return { success: false, error: e.message };
+    }
+  };
+
+  // 3. Đăng xuất tài khoản khách hàng
   const logout = async () => {
     try {
       await fetch("/api/auth/logout", { method: "POST" });
@@ -79,9 +101,9 @@ export function useAuth() {
     isLoggedIn: !!user,
     loading,
     refreshUser,
+    updateDisplayName,
     logout,
     isAuthModalOpen,
     setIsAuthModalOpen,
   };
 }
-

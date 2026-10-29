@@ -3,7 +3,9 @@ import crypto from "crypto";
 import { cookies } from "next/headers";
 
 export const COOKIE_SESSION_NAME = "lau_mam_session";
+export const COOKIE_ADMIN_NAME = "lau_mam_admin_session";
 export const SESSION_MAX_AGE_SECONDS = 20 * 24 * 60 * 60; // 20 ngày = 1,728,000 giây
+export const ADMIN_MAX_AGE_SECONDS = 24 * 60 * 60; // Admin phiên 24h
 
 export interface SessionResult {
   sessionId: string;
@@ -50,7 +52,7 @@ export function getClientIp(req: Request): string {
 }
 
 /**
- * Tạo một phiên làm việc mới có hạn 20 ngày trong Database
+ * Tạo một phiên làm việc mới có hạn 20 ngày trong Database (Dành riêng cho Khách hàng)
  */
 export async function createSessionRecord(params: {
   userId?: string | null;
@@ -106,12 +108,9 @@ export async function getSessionByToken(token: string): Promise<SessionResult | 
 
   // Kiểm tra đã hết hạn chưa
   if (new Date() > session.expires_at) {
-    // Xóa phiên hết hạn
     try {
       await db.userSession.delete({ where: { id: session.id } });
-    } catch {
-      // bỏ qua nếu đã bị xóa
-    }
+    } catch {}
     return null;
   }
 
@@ -134,8 +133,7 @@ export async function getSessionByToken(token: string): Promise<SessionResult | 
 }
 
 /**
- * Khôi phục phiên làm việc khi Safari ITP tự xóa Cookie sau 7 ngày:
- * Nhận device_token từ LocalStorage, đối chiếu DB và gia hạn thêm 20 ngày
+ * Khôi phục phiên làm việc khi Safari ITP tự xóa Cookie sau 7 ngày
  */
 export async function restoreSessionFromToken(
   deviceToken: string,
@@ -144,7 +142,6 @@ export async function restoreSessionFromToken(
   const existing = await getSessionByToken(deviceToken);
   if (!existing) return null;
 
-  // Gia hạn thêm 20 ngày nữa tính từ thời điểm khôi phục
   const newExpiration = get20DaysExpiration();
   const updated = await db.userSession.update({
     where: { cookie_token: deviceToken },
@@ -174,8 +171,7 @@ export async function restoreSessionFromToken(
 }
 
 /**
- * Xử lý thông tin trả về từ OAuth (Google / Facebook / Zalo):
- * Tìm hoặc tạo mới User, sau đó tạo một Session 20 ngày
+ * Xử lý thông tin trả về từ OAuth Khách hàng (Google / Zalo / Facebook)
  */
 export async function handleOAuthUserLogin(params: {
   provider: "GOOGLE" | "FACEBOOK" | "ZALO";
@@ -185,7 +181,6 @@ export async function handleOAuthUserLogin(params: {
   ipAddress?: string | null;
   deviceFingerprint?: string | null;
 }): Promise<SessionResult> {
-  // Tìm hoặc tạo User
   const user = await db.user.upsert({
     where: {
       oauth_provider_oauth_id: {
@@ -205,7 +200,6 @@ export async function handleOAuthUserLogin(params: {
     },
   });
 
-  // Tạo phiên làm việc mới có hạn 20 ngày
   return await createSessionRecord({
     userId: user.id,
     deviceFingerprint: params.deviceFingerprint,
@@ -214,10 +208,9 @@ export async function handleOAuthUserLogin(params: {
 }
 
 /**
- * Trích xuất phiên hiện tại từ Request (qua Cookie hoặc Header Authorization / x-device-token)
+ * Trích xuất phiên khách hàng hiện tại từ Request
  */
 export async function getCurrentSession(req: Request): Promise<SessionResult | null> {
-  // 1. Kiểm tra cookie
   let token: string | null = null;
   const cookieHeader = req.headers.get("cookie");
   if (cookieHeader) {
@@ -227,7 +220,6 @@ export async function getCurrentSession(req: Request): Promise<SessionResult | n
     }
   }
 
-  // 2. Nếu không có cookie, kiểm tra header dự phòng từ LocalStorage (cho Safari)
   if (!token) {
     const authHeader = req.headers.get("authorization");
     if (authHeader && authHeader.startsWith("Bearer ")) {
@@ -243,7 +235,7 @@ export async function getCurrentSession(req: Request): Promise<SessionResult | n
 }
 
 /**
- * Cấu hình HTTP-Only Cookie 20 ngày
+ * Cấu hình HTTP-Only Cookie 20 ngày cho Khách hàng
  */
 export function getSessionCookieHeader(token: string): string {
   const isProd = process.env.NODE_ENV === "production";
@@ -255,8 +247,88 @@ export function getSessionCookieHeader(token: string): string {
 }
 
 /**
- * Cấu hình xóa Cookie
+ * Cấu hình xóa Cookie Khách hàng
  */
 export function getClearSessionCookieHeader(): string {
   return `${COOKIE_SESSION_NAME}=; Path=/; Max-Age=0; HttpOnly; SameSite=Lax`;
+}
+
+// ==============================================================================
+// PHÂN HỆ QUẢN TRỊ VIÊN (ADMIN AUTHENTICATION) - TÁCH BIỆT HOÀN TOÀN
+// ==============================================================================
+
+const ADMIN_SECRET = process.env.SESSION_SECRET || "lau_mam_admin_secret_key_2026";
+const ADMIN_DEFAULT_USER = "admin";
+const ADMIN_DEFAULT_PASS = "admin123";
+
+/**
+ * Kiểm tra tài khoản Quản trị viên
+ */
+export function verifyAdminCredentials(username: string, pass: string): boolean {
+  const validUser = process.env.ADMIN_USERNAME || ADMIN_DEFAULT_USER;
+  const validPass = process.env.ADMIN_PASSWORD || ADMIN_DEFAULT_PASS;
+  return username.trim() === validUser && pass === validPass;
+}
+
+/**
+ * Tạo token phiên đăng nhập Quản trị viên
+ */
+export function generateAdminToken(): string {
+  const data = `admin_${Date.now()}_${Math.random().toString(36)}`;
+  const signature = crypto.createHmac("sha256", ADMIN_SECRET).update(data).digest("hex");
+  return `${Buffer.from(data).toString("base64url")}.${signature}`;
+}
+
+/**
+ * Xác thực token phiên Quản trị viên
+ */
+export function verifyAdminToken(token: string): boolean {
+  if (!token) return false;
+  const parts = token.split(".");
+  if (parts.length !== 2) return false;
+
+  const [dataBase64, providedSignature] = parts;
+  try {
+    const data = Buffer.from(dataBase64, "base64url").toString("utf-8");
+    const expectedSignature = crypto.createHmac("sha256", ADMIN_SECRET).update(data).digest("hex");
+    return crypto.timingSafeEqual(
+      Buffer.from(providedSignature),
+      Buffer.from(expectedSignature)
+    );
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Trích xuất phiên Admin từ Request
+ */
+export function getAdminSessionFromRequest(req: Request): boolean {
+  const cookieHeader = req.headers.get("cookie");
+  if (!cookieHeader) return false;
+
+  const match = cookieHeader.match(new RegExp(`(?:^|; )${COOKIE_ADMIN_NAME}=([^;]*)`));
+  if (!match) return false;
+
+  const token = decodeURIComponent(match[1]);
+  return verifyAdminToken(token);
+}
+
+/**
+ * Cookie Quản trị viên (Thời hạn 24 giờ)
+ */
+export function getAdminCookieHeader(token: string): string {
+  const isProd = process.env.NODE_ENV === "production";
+  return `${COOKIE_ADMIN_NAME}=${encodeURIComponent(
+    token
+  )}; Path=/; Max-Age=${ADMIN_MAX_AGE_SECONDS}; HttpOnly; SameSite=Lax${
+    isProd ? "; Secure" : ""
+  }`;
+}
+
+/**
+ * Xóa Cookie Quản trị viên
+ */
+export function getClearAdminCookieHeader(): string {
+  return `${COOKIE_ADMIN_NAME}=; Path=/; Max-Age=0; HttpOnly; SameSite=Lax`;
 }

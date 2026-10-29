@@ -24,6 +24,7 @@ import { Header } from "@/components/client/Header";
 import { Footer } from "@/components/client/Footer";
 import { AuthModal } from "@/components/client/AuthModal";
 import { StarRating } from "@/components/ui/StarRating";
+import { QuickMenu } from "@/components/client/QuickMenu";
 import { useAuth } from "@/hooks/useAuth";
 import { cn } from "@/lib/utils";
 
@@ -84,7 +85,7 @@ export default function BranchDetailPage() {
   const params = useParams();
   const branchId = params?.id as string;
 
-  const { user, isLoggedIn, logout, isAuthModalOpen, setIsAuthModalOpen } = useAuth();
+  const { user, isLoggedIn, logout, updateDisplayName, isAuthModalOpen, setIsAuthModalOpen } = useAuth();
 
   const [branch, setBranch] = useState<BranchData | null>(null);
   const [promotions, setPromotions] = useState<PromotionData[]>([]);
@@ -275,6 +276,7 @@ export default function BranchDetailPage() {
         userName={user?.displayName}
         userAvatar={user?.avatarUrl || undefined}
         onOpenAuthModal={() => setIsAuthModalOpen(true)}
+        onUpdateName={updateDisplayName}
         onLogout={logout}
       />
 
@@ -386,6 +388,11 @@ export default function BranchDetailPage() {
             </div>
           </div>
         )}
+
+        {/* 2. Thực đơn lướt nhanh cho khách tham khảo tại bàn */}
+        <div className="mb-6 bg-white rounded-2xl border border-stone-200/90 shadow-sm overflow-hidden">
+          <QuickMenu />
+        </div>
 
         {/* 3. Khu vực Đánh giá (Reviews Feed) */}
         <div>

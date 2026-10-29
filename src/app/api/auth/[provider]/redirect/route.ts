@@ -7,17 +7,19 @@ export async function GET(
   const provider = params.provider.toLowerCase();
   const searchParams = req.nextUrl.searchParams;
   const returnUrl = searchParams.get("returnUrl") || "/";
+  const name = searchParams.get("name") || "";
 
-  // Đóng gói state lưu returnUrl và timestamp để bảo vệ CSRF
+  // Đóng gói state lưu returnUrl, name và timestamp
   const stateData = {
     returnUrl,
+    name,
     timestamp: Date.now(),
   };
   const state = Buffer.from(JSON.stringify(stateData)).toString("base64url");
 
   const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
 
-  // Luồng OAuth 2.0 Redirect chuẩn (Top-level Redirect - Không dùng Popup để tránh bị Safari iOS chặn)
+  // Luồng OAuth 2.0 Redirect chuẩn
   if (provider === "google") {
     const clientId = process.env.GOOGLE_CLIENT_ID;
     if (clientId && clientId !== "mock_google_client_id") {
@@ -47,9 +49,7 @@ export async function GET(
     }
   }
 
-  // Chế độ mô phỏng / Phát triển cục bộ (Mock OAuth Flow):
-  // Tự động chuyển thẳng sang callback kèm mã mock để test mượt mà ngay trên mọi thiết bị
+  // Chế độ tự động / Môi trường phát triển:
   const callbackUrl = `${baseUrl}/api/auth/${provider}/callback?code=mock_oauth_code_${Date.now()}&state=${state}`;
   return NextResponse.redirect(callbackUrl);
 }
-

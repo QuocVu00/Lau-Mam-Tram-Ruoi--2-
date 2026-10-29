@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React from "react";
 import { Header } from "@/components/client/Header";
 import { Footer } from "@/components/client/Footer";
 import { HeroSection } from "@/components/client/HeroSection";
@@ -9,7 +9,6 @@ import { GlobalPromotions, type PromotionItem } from "@/components/client/Global
 import { BranchList, type BranchItem } from "@/components/client/BranchList";
 import { FloatingButtons } from "@/components/client/FloatingButtons";
 import { AuthModal } from "@/components/client/AuthModal";
-import { BranchDetailModal } from "@/components/client/BranchDetailModal";
 import { useAuth } from "@/hooks/useAuth";
 
 interface ClientHomeViewProps {
@@ -21,14 +20,11 @@ interface ClientHomeViewProps {
  * COMPONENT CLIENT HOME VIEW (src/components/client/ClientHomeView.tsx)
  * 
  * Mục đích:
- * Xem thông tin, menu và đánh giá của chi nhánh ngay trên trang khách hàng hiện tại
- * mà không cần phải chuyển sang trang khác!
+ * Hiển thị Trang chủ chuỗi Lẩu Mắm Trăm Rưỡi.
+ * Khách hàng bấm vào chi nhánh sẽ chuyển hướng sang trang chi tiết (/branches/[id]).
  */
 export function ClientHomeView({ promotions, branches }: ClientHomeViewProps) {
-  const { user, isLoggedIn, logout, isAuthModalOpen, setIsAuthModalOpen } = useAuth();
-
-  // Chi nhánh đang được chọn để xem chi tiết ngay tại chỗ
-  const [selectedBranchId, setSelectedBranchId] = useState<string | null>(null);
+  const { user, isLoggedIn, logout, updateDisplayName, isAuthModalOpen, setIsAuthModalOpen } = useAuth();
 
   return (
     <div className="min-h-screen flex flex-col bg-[#FFF8F0] selection:bg-brand-primary selection:text-white">
@@ -39,6 +35,7 @@ export function ClientHomeView({ promotions, branches }: ClientHomeViewProps) {
         userName={user?.displayName}
         userAvatar={user?.avatarUrl || undefined}
         onOpenAuthModal={() => setIsAuthModalOpen(true)}
+        onUpdateName={updateDisplayName}
         onLogout={logout}
       />
 
@@ -53,11 +50,8 @@ export function ClientHomeView({ promotions, branches }: ClientHomeViewProps) {
         {/* Thực đơn lướt nhanh tham khảo giá món */}
         <QuickMenu />
 
-        {/* Khối Danh sách Chi nhánh kèm bộ lọc theo Tỉnh/Thành */}
-        <BranchList
-          branches={branches}
-          onSelectBranch={(id) => setSelectedBranchId(id)}
-        />
+        {/* Khối Danh sách Chi nhánh: Bấm vào chuyển sang trang chi tiết mới */}
+        <BranchList branches={branches} />
       </main>
 
       {/* 3. Nút nổi gọi điện & chỉ đường ghim ở đáy màn hình điện thoại */}
@@ -70,20 +64,7 @@ export function ClientHomeView({ promotions, branches }: ClientHomeViewProps) {
         returnUrl="/"
       />
 
-      {/* 5. Khung Chi Tiết Chi Nhánh Ngay Tại Trang (In-place Modal/Bottom Sheet) */}
-      <BranchDetailModal
-        branchId={selectedBranchId}
-        isOpen={!!selectedBranchId}
-        onClose={() => setSelectedBranchId(null)}
-        onRatingUpdated={() => {
-          // Khi có bài đánh giá mới, tải lại trang nhẹ để cập nhật điểm sao ngoài trang chủ
-          if (typeof window !== "undefined") {
-            window.location.reload();
-          }
-        }}
-      />
-
-      {/* 6. Chân trang Footer */}
+      {/* 5. Chân trang Footer */}
       <Footer />
 
     </div>

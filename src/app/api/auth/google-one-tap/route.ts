@@ -29,7 +29,7 @@ export async function POST(req: NextRequest) {
     }
 
     const oauthId = payload.sub || `google_onetap_${Date.now()}`;
-    const displayName = payload.name || "Khách Hàng Google";
+    const displayName = payload.name || "Quốc Vũ (Google)";
     const avatarUrl = payload.picture || null;
 
     const clientIp = getClientIp(req);

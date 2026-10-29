@@ -2,6 +2,7 @@
 
 import React, { useEffect, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import {
   ShieldAlert,
   Building2,
@@ -15,10 +16,13 @@ import {
   ArrowLeft,
   Plus,
   Calendar,
+  LogOut,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export default function AdminDashboardPage() {
+  const router = useRouter();
+  const [isAdminAuth, setIsAdminAuth] = useState(false);
   const [overview, setOverview] = useState<any>(null);
   const [selectedBranchId, setSelectedBranchId] = useState<string>("");
   const [branchReviews, setBranchReviews] = useState<any[]>([]);
@@ -34,6 +38,24 @@ export default function AdminDashboardPage() {
   const [promoContent, setPromoContent] = useState("");
   const [promoBanner, setPromoBanner] = useState("");
   const [promoMinutes, setPromoMinutes] = useState(5);
+
+  // 0. BẮT BUỘC ĐĂNG NHẬP ADMIN - Kiểm tra quyền Quản trị viên
+  useEffect(() => {
+    async function checkAdminAuth() {
+      try {
+        const res = await fetch("/api/admin/auth/me");
+        const json = await res.json();
+        if (!json.authenticated) {
+          router.replace("/admin/login");
+          return;
+        }
+        setIsAdminAuth(true);
+      } catch {
+        router.replace("/admin/login");
+      }
+    }
+    checkAdminAuth();
+  }, [router]);
 
   // 1. Tải Overview & Khuyến mãi
   const loadOverview = async () => {
@@ -195,13 +217,32 @@ export default function AdminDashboardPage() {
           </div>
         </div>
 
-        <Link
-          href="/"
-          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-stone-800 hover:bg-stone-700 text-xs font-bold text-stone-300 transition-colors"
-        >
-          <ArrowLeft className="w-3.5 h-3.5" />
-          <span>Về Trang Khách</span>
-        </Link>
+        <div className="flex items-center gap-3">
+          <div className="hidden sm:flex items-center gap-2 px-3 py-1 bg-stone-900 border border-stone-800 rounded-lg text-xs">
+            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+            <span className="text-stone-300 font-bold">Admin: <span className="text-amber-400">admin</span></span>
+          </div>
+
+          <button
+            type="button"
+            onClick={async () => {
+              await fetch("/api/admin/auth/logout", { method: "POST" });
+              router.push("/admin/login");
+            }}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-rose-950 hover:bg-rose-900 text-rose-300 border border-rose-800 text-xs font-bold transition-colors"
+          >
+            <LogOut className="w-3.5 h-3.5" />
+            <span>Đăng Xuất Admin</span>
+          </button>
+
+          <Link
+            href="/"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-stone-800 hover:bg-stone-700 text-xs font-bold text-stone-300 transition-colors"
+          >
+            <ArrowLeft className="w-3.5 h-3.5" />
+            <span>Về Trang Khách</span>
+          </Link>
+        </div>
       </header>
 
       <main className="flex-1 max-w-6xl mx-auto w-full p-4 sm:p-6 space-y-6">

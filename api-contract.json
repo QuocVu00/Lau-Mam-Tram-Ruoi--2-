@@ -1,0 +1,151 @@
+{
+  "info": {
+    "title": "Hệ thống Lẩu Mắm Trăm Rưỡi - API Contract",
+    "version": "1.0.0",
+    "description": "Tài liệu hợp đồng giao tiếp API giữa Thành viên A (Backend) và Thành viên B (Frontend)"
+  },
+  "endpoints": {
+    "auth": [
+      {
+        "method": "GET",
+        "path": "/api/auth/:provider/redirect?returnUrl=...",
+        "description": "Chuyển hướng OAuth 2.0 (Google, Zalo, Facebook) lưu state returnUrl để mở lại đúng trang chi nhánh"
+      },
+      {
+        "method": "GET",
+        "path": "/api/auth/:provider/callback",
+        "description": "Xử lý kết quả OAuth, cấp HTTP-Only Cookie 20 ngày và trả kèm device_token cho LocalStorage"
+      },
+      {
+        "method": "POST",
+        "path": "/api/auth/google-one-tap",
+        "description": "Đăng nhập nhanh không tải lại trang qua Google One Tap credential",
+        "body": {
+          "credential": "JWT_CREDENTIAL_STRING"
+        }
+      },
+      {
+        "method": "POST",
+        "path": "/api/auth/restore-session",
+        "description": "Khôi phục phiên và cấp lại Cookie 20 ngày khi Safari ITP xóa cookie",
+        "body": {
+          "device_token": "string",
+          "device_fingerprint": "string (optional)"
+        }
+      },
+      {
+        "method": "GET",
+        "path": "/api/auth/me",
+        "description": "Lấy thông tin tài khoản và phiên đăng nhập hiện tại"
+      },
+      {
+        "method": "POST",
+        "path": "/api/auth/logout",
+        "description": "Đăng xuất tài khoản và vô hiệu hóa phiên"
+      }
+    ],
+    "client": [
+      {
+        "method": "GET",
+        "path": "/api/promotions/global",
+        "description": "Lấy danh sách khuyến mãi toàn hệ thống đang trong thời gian hiệu lực (mảng rỗng tự ẩn banner)"
+      },
+      {
+        "method": "GET",
+        "path": "/api/branches?location=...&search=...",
+        "description": "Danh sách các chi nhánh kèm điểm sao trung bình, tổng review và trạng thái mở cửa"
+      },
+      {
+        "method": "GET",
+        "path": "/api/branches/:id",
+        "description": "Chi tiết một chi nhánh kèm khuyến mãi gộp (GLOBAL + BRANCH của cơ sở đó)"
+      },
+      {
+        "method": "GET",
+        "path": "/api/branches/:id/reviews?tab=ALL|MEDIA|5|4|3|2|1&page=1&limit=10",
+        "description": "Danh sách đánh giá (đã tự động áp dụng bộ lọc Shadowban theo user/session hiện tại)"
+      },
+      {
+        "method": "POST",
+        "path": "/api/reviews",
+        "description": "Đăng bài đánh giá mới (tự động tính lại điểm sao chi nhánh)",
+        "body": {
+          "branch_id": "string",
+          "rating": "number (1-5)",
+          "comment": "string",
+          "media": [
+            {
+              "media_type": "IMAGE | VIDEO",
+              "file_url": "string",
+              "thumbnail_url": "string (optional)"
+            }
+          ]
+        }
+      },
+      {
+        "method": "POST",
+        "path": "/api/reviews/:id/reactions",
+        "description": "Thả hoặc gỡ biểu tượng cảm xúc (chống spam rate limit)",
+        "body": {
+          "reaction_type": "LIKE | HEART | YUM | WOW"
+        }
+      },
+      {
+        "method": "POST",
+        "path": "/api/upload",
+        "description": "Upload file ảnh (.HEIC/.JPG/.PNG) hoặc video (.MOV/.MP4), đưa vào tiến trình ngầm nén WebP/MP4 720p"
+      }
+    ],
+    "admin": [
+      {
+        "method": "GET",
+        "path": "/api/admin/overview",
+        "description": "Thống kê tổng quan chuỗi chi nhánh, tổng review và điểm sao hệ thống"
+      },
+      {
+        "method": "GET",
+        "path": "/api/admin/branches/:id/reviews",
+        "description": "Xem toàn bộ review của chi nhánh (gồm cả bài PUBLIC, SHADOW_HIDDEN, DELETED, IP và session)"
+      },
+      {
+        "method": "PATCH",
+        "path": "/api/admin/reviews/:id/moderation",
+        "description": "Chuyển trạng thái kiểm duyệt (PUBLIC, SHADOW_HIDDEN, DELETED) và tự động tính lại điểm sao tức thì âm thầm",
+        "body": {
+          "status": "PUBLIC | SHADOW_HIDDEN | DELETED"
+        }
+      },
+      {
+        "method": "POST",
+        "path": "/api/admin/branches",
+        "description": "Tạo chi nhánh mới"
+      },
+      {
+        "method": "PUT",
+        "path": "/api/admin/branches/:id",
+        "description": "Cập nhật chi nhánh"
+      },
+      {
+        "method": "DELETE",
+        "path": "/api/admin/branches/:id",
+        "description": "Xóa hoặc vô hiệu hóa chi nhánh"
+      },
+      {
+        "method": "POST",
+        "path": "/api/admin/promotions",
+        "description": "Tạo chương trình khuyến mãi"
+      },
+      {
+        "method": "PUT",
+        "path": "/api/admin/promotions/:id",
+        "description": "Cập nhật chương trình khuyến mãi"
+      },
+      {
+        "method": "DELETE",
+        "path": "/api/admin/promotions/:id",
+        "description": "Xóa chương trình khuyến mãi"
+      }
+    ]
+  }
+}
+

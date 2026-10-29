@@ -2,7 +2,7 @@
 
 import React from "react";
 import Link from "next/link";
-import { UtensilsCrossed, Phone, User as UserIcon, LogOut } from "lucide-react";
+import { Phone, User as UserIcon, LogOut } from "lucide-react";
 
 /**
  * THUỘC TÍNH (PROPS) CỦA HEADER
@@ -25,7 +25,7 @@ interface HeaderProps {
  * 
  * Mục đích:
  * Thanh điều hướng trên cùng chuẩn Mobile-First mang phong cách dân dã miền Tây.
- * Hiển thị Logo thương hiệu, Hotline hỗ trợ và Nút đăng nhập 1 chạm nhanh.
+ * Hiển thị Logo thương hiệu thực tế (logo.jpg), Hotline hỗ trợ và Nút đăng nhập 1 chạm nhanh.
  */
 export function Header({
   isLoggedIn = false,
@@ -38,10 +38,15 @@ export function Header({
     <header className="sticky top-0 z-30 w-full bg-white/95 backdrop-blur-md border-b border-amber-100 shadow-sm">
       <div className="max-w-4xl mx-auto px-4 h-16 flex items-center justify-between">
         
-        {/* 1. Khu vực Logo & Tên thương hiệu */}
+        {/* 1. Khu vực Logo & Tên thương hiệu (Dùng ảnh logo.jpg thực tế) */}
         <Link href="/" className="flex items-center gap-2.5 group">
-          <div className="w-10 h-10 rounded-xl bg-brand-primary flex items-center justify-center text-white shadow-md group-hover:scale-105 transition-transform">
-            <UtensilsCrossed className="w-5 h-5" />
+          <div className="w-10 h-10 rounded-xl overflow-hidden border border-amber-200/80 shadow-md group-hover:scale-105 transition-transform bg-white shrink-0">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src="/images/logo.jpg"
+              alt="Logo Lẩu Mắm Trăm Rưỡi"
+              className="w-full h-full object-cover"
+            />
           </div>
           <div>
             <div className="flex items-center gap-1.5">
@@ -67,7 +72,7 @@ export function Header({
             <span>0988.150.150</span>
           </a>
 
-          {/* Nút vào trang Quản trị (Admin) để demo */}
+          {/* Nút vào trang Quản trị (Admin) */}
           <Link
             href="/admin"
             className="flex items-center gap-1 px-2.5 py-1.5 rounded-full bg-stone-900 hover:bg-stone-800 text-amber-400 text-[11px] font-bold transition-all shadow-sm"

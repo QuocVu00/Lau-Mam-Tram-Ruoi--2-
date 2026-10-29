@@ -20,6 +20,8 @@ dist/
 .env.development.local
 .env.test.local
 .env.production.local
+*private*
+*PRIVATE*
 
 # 4. Cơ sở dữ liệu SQLite cục bộ (dùng khi test trên máy lập trình)
 prisma/*.db

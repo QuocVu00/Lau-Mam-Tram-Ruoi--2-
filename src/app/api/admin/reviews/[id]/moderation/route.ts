@@ -36,8 +36,8 @@ export async function PATCH(
         status === "SHADOW_HIDDEN"
           ? "Đã áp dụng chế độ Ẩn thông minh (Shadowban) thành công"
           : status === "DELETED"
-          ? "Đã xóa vĩnh viễn bài đánh giá thành công"
-          : "Đã khôi phục bài đánh giá về công khai thành công",
+            ? "Đã xóa vĩnh viễn bài đánh giá thành công"
+            : "Đã khôi phục bài đánh giá về công khai thành công",
       data: result,
     });
   } catch (error: any) {

@@ -1,11 +1,19 @@
 import { moderateReview } from "@/server/review.service";
 import { ReviewStatus } from "@/server/types";
+import { getAdminSessionFromRequest } from "@/server/auth";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function PATCH(
   req: NextRequest,
   { params }: { params: { id: string } }
 ) {
+  if (!getAdminSessionFromRequest(req)) {
+    return NextResponse.json(
+      { error: "Truy cập bị từ chối: Bắt buộc tài khoản Quản trị viên (Admin)", success: false },
+      { status: 403 }
+    );
+  }
+
   try {
     const reviewId = params.id;
     const body = await req.json();
@@ -40,4 +48,3 @@ export async function PATCH(
     );
   }
 }
-

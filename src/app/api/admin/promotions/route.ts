@@ -1,7 +1,15 @@
 import { adminCreatePromotion, adminGetAllPromotions } from "@/server/promotion.service";
+import { getAdminSessionFromRequest } from "@/server/auth";
 import { NextRequest, NextResponse } from "next/server";
 
-export async function GET() {
+export async function GET(req: NextRequest) {
+  if (!getAdminSessionFromRequest(req)) {
+    return NextResponse.json(
+      { error: "Truy cập bị từ chối: Bắt buộc tài khoản Quản trị viên (Admin)", success: false },
+      { status: 403 }
+    );
+  }
+
   try {
     const promotions = await adminGetAllPromotions();
     return NextResponse.json({
@@ -18,6 +26,13 @@ export async function GET() {
 }
 
 export async function POST(req: NextRequest) {
+  if (!getAdminSessionFromRequest(req)) {
+    return NextResponse.json(
+      { error: "Truy cập bị từ chối: Bắt buộc tài khoản Quản trị viên (Admin)", success: false },
+      { status: 403 }
+    );
+  }
+
   try {
     const body = await req.json();
     const { title, content, bannerUrl, scope, branchIds, startAt, endAt, isActive } = body;
@@ -53,4 +68,3 @@ export async function POST(req: NextRequest) {
     );
   }
 }
-

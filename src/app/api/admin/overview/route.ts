@@ -1,9 +1,17 @@
 import { getAdminOverview } from "@/server/admin.service";
-import { NextResponse } from "next/server";
+import { getAdminSessionFromRequest } from "@/server/auth";
+import { NextRequest, NextResponse } from "next/server";
 
 export const dynamic = "force-dynamic";
 
-export async function GET() {
+export async function GET(req: NextRequest) {
+  if (!getAdminSessionFromRequest(req)) {
+    return NextResponse.json(
+      { error: "Truy cập bị từ chối: Bắt buộc tài khoản Quản trị viên (Admin)", success: false },
+      { status: 403 }
+    );
+  }
+
   try {
     const overview = await getAdminOverview();
     return NextResponse.json({

@@ -1,7 +1,15 @@
 import { adminCreateBranch, getBranches } from "@/server/branch.service";
+import { getAdminSessionFromRequest } from "@/server/auth";
 import { NextRequest, NextResponse } from "next/server";
 
-export async function GET() {
+export async function GET(req: NextRequest) {
+  if (!getAdminSessionFromRequest(req)) {
+    return NextResponse.json(
+      { error: "Truy cập bị từ chối: Bắt buộc tài khoản Quản trị viên (Admin)", success: false },
+      { status: 403 }
+    );
+  }
+
   try {
     const branches = await getBranches({ onlyActive: false });
     return NextResponse.json({
@@ -18,6 +26,13 @@ export async function GET() {
 }
 
 export async function POST(req: NextRequest) {
+  if (!getAdminSessionFromRequest(req)) {
+    return NextResponse.json(
+      { error: "Truy cập bị từ chối: Bắt buộc tài khoản Quản trị viên (Admin)", success: false },
+      { status: 403 }
+    );
+  }
+
   try {
     const body = await req.json();
     const { name, address, districtCity, googleMapUrl, hotline, openHours, coverImages, status } =
@@ -54,4 +69,3 @@ export async function POST(req: NextRequest) {
     );
   }
 }
-

@@ -1,9 +1,8 @@
 "use client";
 
 import React, { useState } from "react";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ShieldAlert, Lock, User, ArrowLeft, ArrowRight, CheckCircle2 } from "lucide-react";
+import { ShieldAlert, Lock, User, ArrowRight, CheckCircle2 } from "lucide-react";
 
 export default function AdminLoginPage() {
   const router = useRouter();
@@ -40,18 +39,10 @@ export default function AdminLoginPage() {
   return (
     <div className="min-h-screen bg-stone-950 text-stone-100 flex flex-col justify-center items-center p-4">
       
-      {/* Nút quay lại trang khách */}
-      <div className="w-full max-w-md mb-4 flex justify-between items-center">
-        <Link
-          href="/"
-          className="inline-flex items-center gap-1.5 text-xs text-stone-400 hover:text-amber-400 transition-colors"
-        >
-          <ArrowLeft className="w-3.5 h-3.5" />
-          <span>Về trang chủ khách hàng</span>
-        </Link>
-
-        <span className="text-[11px] font-mono text-stone-500 uppercase tracking-widest">
-          Phân Hệ Quản Trị
+      {/* Huy hiệu nhận diện phân hệ quản trị độc lập */}
+      <div className="w-full max-w-md mb-4 flex justify-center items-center">
+        <span className="text-xs font-mono font-bold text-amber-500 uppercase tracking-widest bg-stone-900 border border-stone-800 px-3.5 py-1.5 rounded-full shadow-sm">
+          Phân Hệ Quản Trị Hệ Thống
         </span>
       </div>
 

@@ -1,7 +1,6 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
   ShieldAlert,
@@ -13,7 +12,6 @@ import {
   Trash2,
   CheckCircle,
   RefreshCw,
-  ArrowLeft,
   Plus,
   Calendar,
   LogOut,
@@ -234,14 +232,6 @@ export default function AdminDashboardPage() {
             <LogOut className="w-3.5 h-3.5" />
             <span>Đăng Xuất Admin</span>
           </button>
-
-          <Link
-            href="/"
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-stone-800 hover:bg-stone-700 text-xs font-bold text-stone-300 transition-colors"
-          >
-            <ArrowLeft className="w-3.5 h-3.5" />
-            <span>Về Trang Khách</span>
-          </Link>
         </div>
       </header>
 

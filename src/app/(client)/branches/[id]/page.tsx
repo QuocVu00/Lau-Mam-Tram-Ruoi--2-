@@ -4,11 +4,8 @@ import React, { useEffect, useState } from "react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import {
-  ArrowLeft,
   MapPin,
   Clock,
-  Phone,
-  Navigation,
   Sparkles,
   MessageSquare,
   Camera,
@@ -18,7 +15,6 @@ import {
   Laugh,
   X,
   CheckCircle2,
-  QrCode,
 } from "lucide-react";
 import { Header } from "@/components/client/Header";
 import { Footer } from "@/components/client/Footer";
@@ -79,6 +75,22 @@ interface ReviewItem {
     WOW: number;
     userReaction?: "LIKE" | "HEART" | "YUM" | "WOW" | null;
   };
+}
+
+/**
+ * Hàm phân tách Tên Thương Hiệu và Tên Chi Nhánh
+ * Giúp hiển thị tối ưu: Trên điện thoại tên chi nhánh sẽ ở dưới, khi full màn hình hiển thị liền mạch
+ */
+function parseBranchTitle(fullName: string) {
+  if (!fullName) return { brandPart: "", branchPart: "" };
+  const dashIndex = fullName.indexOf("-");
+  if (dashIndex !== -1) {
+    return {
+      brandPart: fullName.slice(0, dashIndex).trim(),
+      branchPart: fullName.slice(dashIndex + 1).trim(),
+    };
+  }
+  return { brandPart: fullName, branchPart: "" };
 }
 
 export default function BranchDetailPage() {
@@ -281,38 +293,43 @@ export default function BranchDetailPage() {
       />
 
       <main className="flex-1 max-w-4xl mx-auto w-full px-4 py-4 pb-28">
-        {/* Thanh điều hướng quay lại & Mã QR */}
-        <div className="flex items-center justify-between mb-4">
-          <Link
-            href="/"
-            className="inline-flex items-center gap-1.5 text-xs font-bold text-stone-600 hover:text-brand-primary"
-          >
-            <ArrowLeft className="w-4 h-4" />
-            <span>Tất cả chi nhánh</span>
-          </Link>
-
-          <button
-            type="button"
-            onClick={() => setIsQrModalOpen(true)}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white border border-stone-200 text-stone-700 hover:text-brand-primary text-xs font-bold shadow-sm transition-all"
-          >
-            <QrCode className="w-3.5 h-3.5 text-brand-primary" />
-            <span>Mã QR bàn ăn</span>
-          </button>
-        </div>
+{/* Đã lược bỏ thanh điều hướng và nút QR theo yêu cầu */}
 
         {/* 1. Thông tin Chi nhánh */}
         <div className="bg-white rounded-2xl p-5 border border-stone-200/90 shadow-sm mb-5">
-          <div className="flex items-start justify-between gap-3 mb-2">
-            <h1 className="font-black text-xl sm:text-2xl text-stone-900 leading-tight">
-              {branch.name}
-            </h1>
-            <div className="flex items-center gap-1 bg-amber-50 px-3 py-1 rounded-xl border border-amber-200 shrink-0">
+          {/* Tiêu đề chi nhánh: Tự động xuống dòng trên Mobile, giữ nguyên 1 dòng trên Desktop */}
+          <div className="flex items-start justify-between gap-2 sm:gap-3 mb-2">
+            {(() => {
+              const { brandPart, branchPart } = parseBranchTitle(branch.name);
+              return (
+                <h1 className="font-black text-stone-900 leading-tight">
+                  {branchPart ? (
+                    <>
+                      {/* Trên điện thoại: Tên thương hiệu ở dòng 1 */}
+                      <span className="block sm:inline text-base sm:text-2xl">
+                        {brandPart}
+                      </span>
+                      {/* Dấu gạch ngang chỉ hiện khi màn hình lớn (Desktop) */}
+                      <span className="hidden sm:inline text-stone-400"> - </span>
+                      {/* Tên cơ sở chi nhánh: Xuống dòng ở dưới trên điện thoại, liền dòng khi full màn hình */}
+                      <span className="block sm:inline text-sm sm:text-2xl font-bold sm:font-black text-stone-700 sm:text-stone-900 mt-0.5 sm:mt-0">
+                        {branchPart}
+                      </span>
+                    </>
+                  ) : (
+                    <span className="text-base sm:text-2xl">{branch.name}</span>
+                  )}
+                </h1>
+              );
+            })()}
+
+            {/* Khung điểm sao đánh giá: Thu nhỏ tinh tế trên Mobile, giữ nguyên trên Desktop */}
+            <div className="flex items-center gap-0.5 sm:gap-1 bg-amber-50 px-2 py-0.5 sm:px-3 sm:py-1 rounded-lg sm:rounded-xl border border-amber-200 shrink-0">
               <StarRating rating={branch.avgRating} size="sm" />
-              <span className="text-sm font-black text-amber-900 ml-1">
+              <span className="text-xs sm:text-sm font-black text-amber-900 ml-0.5 sm:ml-1">
                 {branch.avgRating.toFixed(1)}
               </span>
-              <span className="text-xs text-stone-500">({branch.totalReviews})</span>
+              <span className="text-[10px] sm:text-xs text-stone-500">({branch.totalReviews})</span>
             </div>
           </div>
 
@@ -341,26 +358,7 @@ export default function BranchDetailPage() {
             </div>
           )}
 
-          {/* Các nút hành động nổi bật */}
-          <div className="grid grid-cols-2 gap-3 pt-3 border-t border-stone-100">
-            <a
-              href={branch.googleMapUrl || `https://maps.google.com/?q=${encodeURIComponent(branch.address)}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl bg-amber-500 hover:bg-amber-600 text-white font-bold text-xs sm:text-sm shadow-sm transition-all"
-            >
-              <Navigation className="w-4 h-4" />
-              <span>Chỉ đường Maps</span>
-            </a>
-
-            <a
-              href={`tel:${branch.hotline || "0988150150"}`}
-              className="flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs sm:text-sm shadow-sm transition-all"
-            >
-              <Phone className="w-4 h-4" />
-              <span>Gọi đặt bàn</span>
-            </a>
-          </div>
+{/* Đã lược bỏ 2 nút Chỉ đường Maps và Gọi đặt bàn theo yêu cầu */}
         </div>
 
         {/* 2. Khuyến mãi áp dụng tại chi nhánh */}
@@ -380,9 +378,7 @@ export default function BranchDetailPage() {
                     <h4 className="font-extrabold text-brand-primary mb-1">{p.title}</h4>
                     <p className="text-stone-700 leading-relaxed">{p.content}</p>
                   </div>
-                  <span className="shrink-0 px-2 py-0.5 rounded-full bg-brand-primary text-white text-[10px] font-bold">
-                    {p.scope === "GLOBAL" ? "Toàn chuỗi" : "Chi nhánh"}
-                  </span>
+{/* Đã lược bỏ nhãn Toàn chuỗi theo yêu cầu */}
                 </div>
               ))}
             </div>

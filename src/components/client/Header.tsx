@@ -2,7 +2,7 @@
 
 import React, { useState } from "react";
 import Link from "next/link";
-import { Phone, LogOut, Edit2, Check, X } from "lucide-react";
+import { Phone, LogOut } from "lucide-react";
 
 /**
  * THUỘC TÍNH (PROPS) CỦA HEADER KHÁCH HÀNG
@@ -41,20 +41,7 @@ export function Header({
   // Lọc sạch hậu tố (Google) hoặc (gg) ở sau tên hiển thị
   const cleanName = userName ? userName.replace(/\s*\((?:Google|gg|GG)\)/i, "").trim() : "";
 
-  const [isEditing, setIsEditing] = useState(false);
-  const [editName, setEditName] = useState(cleanName);
-  const [saving, setSaving] = useState(false);
-
-  const handleSaveName = async () => {
-    if (!editName.trim() || !onUpdateName) {
-      setIsEditing(false);
-      return;
-    }
-    setSaving(true);
-    await onUpdateName(editName.trim());
-    setSaving(false);
-    setIsEditing(false);
-  };
+// Không cho phép người dùng đổi tên: Giữ nguyên tên gốc từ tài khoản Google
 
   return (
     <header className="sticky top-0 z-30 w-full bg-white/95 backdrop-blur-md border-b border-amber-100 shadow-sm">
@@ -94,77 +81,29 @@ export function Header({
             <span>0901.019.868</span>
           </a>
 
-          {/* Luồng Khách hàng: Đăng nhập Google & hiển thị tên khách hàng */}
+          {/* Luồng Khách hàng: Đăng nhập Google & hiển thị tên khách hàng cố định */}
           {isLoggedIn ? (
             <div className="flex items-center gap-1 sm:gap-1.5">
-              {isEditing ? (
-                <div className="flex items-center gap-1 bg-amber-50 px-2 py-1 rounded-full border border-amber-300 shadow-sm">
-                  <input
-                    type="text"
-                    value={editName}
-                    onChange={(e) => setEditName(e.target.value)}
-                    className="w-28 sm:w-36 text-xs font-bold text-stone-900 bg-transparent outline-none"
-                    autoFocus
-                    placeholder="Tên tài khoản..."
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter") handleSaveName();
-                      if (e.key === "Escape") setIsEditing(false);
-                    }}
+              {/* Huy hiệu tài khoản người dùng: Không cho đổi tên, đã bỏ cây viết */}
+              <div className="flex items-center gap-2 bg-amber-50 pl-1.5 pr-3 py-1 rounded-full border border-amber-200 shadow-sm">
+                {userAvatar ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    src={userAvatar}
+                    alt={cleanName || "Avatar"}
+                    className="w-6 h-6 rounded-full border border-brand-primary/30 object-cover shadow-sm shrink-0"
                   />
-                  <button
-                    type="button"
-                    onClick={handleSaveName}
-                    disabled={saving}
-                    title="Lưu tên"
-                    className="p-1 rounded-full text-emerald-600 hover:bg-emerald-100 transition-colors"
-                  >
-                    <Check className="w-3 h-3" />
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setIsEditing(false)}
-                    title="Hủy"
-                    className="p-1 rounded-full text-stone-400 hover:bg-stone-200 transition-colors"
-                  >
-                    <X className="w-3 h-3" />
-                  </button>
-                </div>
-              ) : (
-                <div className="flex items-center gap-2 bg-amber-50 pl-1.5 pr-2.5 py-1 rounded-full border border-amber-200 shadow-sm">
-                  {userAvatar ? (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img
-                      src={userAvatar}
-                      alt={cleanName || "Avatar"}
-                      className="w-6 h-6 rounded-full border border-brand-primary/30 object-cover shadow-sm shrink-0"
-                    />
-                  ) : (
-                    <div className="w-6 h-6 rounded-full bg-brand-primary text-white flex items-center justify-center font-bold text-[10px] shrink-0">
-                      {cleanName ? cleanName.charAt(0).toUpperCase() : "U"}
-                    </div>
-                  )}
+                ) : (
+                  <div className="w-6 h-6 rounded-full bg-brand-primary text-white flex items-center justify-center font-bold text-[10px] shrink-0">
+                    {cleanName ? cleanName.charAt(0).toUpperCase() : "U"}
+                  </div>
+                )}
 
-                  {/* Hiển thị tên tài khoản Google thuần túy (không có hậu tố) */}
-                  <span className="text-xs font-extrabold text-stone-900 whitespace-nowrap">
-                    {cleanName}
-                  </span>
-
-                  {/* Nút bấm chỉnh sửa tên nếu muốn đổi */}
-                  {onUpdateName && (
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setEditName(cleanName);
-                        setIsEditing(true);
-                      }}
-                      title="Đổi tên hiển thị"
-                      className="p-1 rounded-full text-stone-400 hover:text-amber-700 hover:bg-amber-100/60 transition-colors"
-                    >
-                      <Edit2 className="w-2.5 h-2.5" />
-                    </button>
-                  )}
-                </div>
-              )}
+                {/* Hiển thị cố định tên Google thuần túy của khách hàng */}
+                <span className="text-xs font-extrabold text-stone-900 whitespace-nowrap">
+                  {cleanName}
+                </span>
+              </div>
 
               {/* Nút Đăng xuất khách hàng */}
               {onLogout && (

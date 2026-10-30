@@ -15,7 +15,7 @@ interface StarRatingProps {
   // Chế độ cho phép người dùng click để đánh giá hay chỉ để xem (mặc định: false - chỉ xem)
   interactive?: boolean;
   // Kích thước của ngôi sao: "sm" (nhỏ), "md" (vừa), "lg" (lớn)
-  size?: "sm" | "md" | "lg";
+  size?: "xs" | "sm" | "md" | "lg";
   // Tùy chọn hiển thị chữ số điểm đi kèm bên cạnh (VD: "4.9")
   showScore?: boolean;
 }
@@ -38,14 +38,16 @@ export function StarRating({
   const [hoverRating, setHoverRating] = useState<number | null>(null);
 
   // Bản đồ kích thước (pixel) của ngôi sao
+  // Bảng kích thước ngôi sao hỗ trợ giao diện điện thoại (Mobile) thu nhỏ tinh tế
   const sizeMap = {
-    sm: "w-3.5 h-3.5",
+    xs: "w-2.5 h-2.5 sm:w-3 sm:h-3",
+    sm: "w-3 h-3 sm:w-3.5 sm:h-3.5",
     md: "w-5 h-5",
     lg: "w-7 h-7",
   };
 
   return (
-    <div className="inline-flex items-center gap-1">
+    <div className="inline-flex items-center gap-0.5 sm:gap-1">
       {/* Vòng lặp tạo ra đúng 5 ngôi sao (đánh số từ 1 đến 5) */}
       {[1, 2, 3, 4, 5].map((starIndex) => {
         // Điểm sao thực tế cần so sánh: Ưu tiên điểm đang hover, nếu không thì lấy rating gốc

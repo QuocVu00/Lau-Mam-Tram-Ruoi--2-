@@ -23,13 +23,13 @@ export async function POST(req: NextRequest) {
     } catch {
       payload = {
         sub: `google_onetap_${Date.now()}`,
-        name: "Khách Hàng Google One Tap",
+        name: "Quốc Vũ",
         picture: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150&q=80",
       };
     }
 
     const oauthId = payload.sub || `google_onetap_${Date.now()}`;
-    const displayName = payload.name || "Quốc Vũ (Google)";
+    const displayName = payload.name || "Quốc Vũ";
     const avatarUrl = payload.picture || null;
 
     const clientIp = getClientIp(req);
@@ -63,4 +63,3 @@ export async function POST(req: NextRequest) {
     );
   }
 }
-

@@ -45,7 +45,15 @@ export function Footer() {
               10:00 - 22:00 (Tất cả các ngày trong tuần)
             </p>
             <p className="text-xs text-stone-400">
-              Hotline / Zalo: <span className="text-white font-bold">0988.150.150</span>
+              Hotline / Zalo:{" "}
+              <a
+                href="https://zalo.me/0901019868"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-amber-200 font-bold hover:underline"
+              >
+                0901.019.868
+              </a>
             </p>
           </div>
 

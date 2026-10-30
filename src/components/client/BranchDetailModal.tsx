@@ -5,8 +5,6 @@ import {
   X,
   MapPin,
   Clock,
-  Phone,
-  Navigation,
   Sparkles,
   MessageSquare,
   Camera,
@@ -15,7 +13,6 @@ import {
   Flame,
   Laugh,
   CheckCircle2,
-  QrCode,
   Share2,
 } from "lucide-react";
 import { StarRating } from "@/components/ui/StarRating";
@@ -257,6 +254,19 @@ export function BranchDetailModal({
     ? `${window.location.origin}/branches/${branchId}`
     : `https://laumamtramruoi.vn/branches/${branchId}`;
 
+  // Tách tên chuỗi và tên cơ sở để tối ưu hiển thị trên màn hình điện thoại
+  const parseBranchTitle = (fullName: string) => {
+    if (!fullName) return { brandPart: "", branchPart: "" };
+    const dashIndex = fullName.indexOf("-");
+    if (dashIndex !== -1) {
+      return {
+        brandPart: fullName.slice(0, dashIndex).trim(),
+        branchPart: fullName.slice(dashIndex + 1).trim(),
+      };
+    }
+    return { brandPart: fullName, branchPart: "" };
+  };
+
   return (
     <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/60 backdrop-blur-sm animate-fade-in">
       {/* Khung nội dung chi nhánh (Bottom Sheet trên Mobile, Modal lớn trên Desktop) */}
@@ -272,14 +282,7 @@ export function BranchDetailModal({
           </div>
 
           <div className="flex items-center gap-2">
-            <button
-              type="button"
-              onClick={() => setIsQrModalOpen(true)}
-              title="Mã QR bàn ăn"
-              className="p-1.5 rounded-full hover:bg-stone-100 text-stone-500 hover:text-brand-primary transition-colors"
-            >
-              <QrCode className="w-4 h-4" />
-            </button>
+{/* Đã lược bỏ nút QR modal theo yêu cầu */}
             <button
               type="button"
               onClick={onClose}
@@ -301,16 +304,39 @@ export function BranchDetailModal({
             <>
               {/* 1. Thẻ tóm tắt thông tin */}
               <div className="bg-white rounded-2xl p-4 border border-stone-200 shadow-sm">
-                <div className="flex items-start justify-between gap-3 mb-2">
-                  <h3 className="font-extrabold text-base sm:text-lg text-stone-900 leading-snug">
-                    {branch.name}
-                  </h3>
-                  <div className="flex items-center gap-1 bg-amber-50 px-2.5 py-1 rounded-xl border border-amber-200 shrink-0">
+                {/* Tiêu đề chi nhánh trong Modal: Xuống dòng trên Mobile, giữ nguyên trên Desktop */}
+                <div className="flex items-start justify-between gap-2 sm:gap-3 mb-2">
+                  {(() => {
+                    const { brandPart, branchPart } = parseBranchTitle(branch.name);
+                    return (
+                      <h3 className="font-black text-stone-900 leading-tight">
+                        {branchPart ? (
+                          <>
+                            {/* Dòng 1: Thương hiệu */}
+                            <span className="block sm:inline text-sm sm:text-lg">
+                              {brandPart}
+                            </span>
+                            {/* Dấu gạch chỉ hiện trên màn hình lớn */}
+                            <span className="hidden sm:inline text-stone-400"> - </span>
+                            {/* Dòng 2: Chi nhánh */}
+                            <span className="block sm:inline text-xs sm:text-lg font-bold sm:font-black text-stone-700 sm:text-stone-900 mt-0.5 sm:mt-0">
+                              {branchPart}
+                            </span>
+                          </>
+                        ) : (
+                          <span className="text-sm sm:text-lg">{branch.name}</span>
+                        )}
+                      </h3>
+                    );
+                  })()}
+
+                  {/* Khung điểm sao thu nhỏ trên Mobile */}
+                  <div className="flex items-center gap-0.5 sm:gap-1 bg-amber-50 px-1.5 py-0.5 sm:px-2.5 sm:py-1 rounded-lg sm:rounded-xl border border-amber-200 shrink-0">
                     <StarRating rating={branch.avgRating} size="sm" />
-                    <span className="text-xs font-black text-amber-900 ml-1">
+                    <span className="text-[11px] sm:text-xs font-black text-amber-900 ml-0.5 sm:ml-1">
                       {branch.avgRating.toFixed(1)}
                     </span>
-                    <span className="text-[10px] text-stone-500">({branch.totalReviews})</span>
+                    <span className="text-[9px] sm:text-[10px] text-stone-500">({branch.totalReviews})</span>
                   </div>
                 </div>
 
@@ -339,26 +365,7 @@ export function BranchDetailModal({
                   </div>
                 )}
 
-                {/* Nút hành động trực tiếp */}
-                <div className="grid grid-cols-2 gap-2.5 pt-2 border-t border-stone-100">
-                  <a
-                    href={branch.googleMapUrl || `https://maps.google.com/?q=${encodeURIComponent(branch.address)}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex items-center justify-center gap-2 py-2 px-3 rounded-xl bg-amber-500 hover:bg-amber-600 text-white font-bold text-xs shadow-sm transition-all"
-                  >
-                    <Navigation className="w-3.5 h-3.5" />
-                    <span>Chỉ đường Maps</span>
-                  </a>
-
-                  <a
-                    href={`tel:${branch.hotline || "0988150150"}`}
-                    className="flex items-center justify-center gap-2 py-2 px-3 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-sm transition-all"
-                  >
-                    <Phone className="w-3.5 h-3.5" />
-                    <span>Gọi đặt bàn</span>
-                  </a>
-                </div>
+{/* Đã lược bỏ 2 nút Chỉ đường Maps và Gọi đặt bàn theo yêu cầu */}
               </div>
 
               {/* 2. Khuyến mãi áp dụng riêng cho chi nhánh này */}
@@ -377,9 +384,7 @@ export function BranchDetailModal({
                         <h4 className="font-extrabold text-brand-primary mb-0.5">{p.title}</h4>
                         <p className="text-stone-700 leading-relaxed text-[11px]">{p.content}</p>
                       </div>
-                      <span className="shrink-0 px-2 py-0.5 rounded-full bg-brand-primary text-white text-[9px] font-bold">
-                        {p.scope === "GLOBAL" ? "Toàn chuỗi" : "Chi nhánh"}
-                      </span>
+{/* Đã lược bỏ nhãn Toàn chuỗi theo yêu cầu */}
                     </div>
                   ))}
                 </div>

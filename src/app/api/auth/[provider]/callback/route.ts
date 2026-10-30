@@ -1,6 +1,11 @@
 import { getClientIp, getSessionCookieHeader, handleOAuthUserLogin } from "@/server/auth";
 import { NextRequest, NextResponse } from "next/server";
 
+/**
+ * XỬ LÝ KẾT QUẢ OAUTH 2.0 CALLBACK (src/app/api/auth/[provider]/callback/route.ts)
+ * 
+ * Luồng Khách Hàng: Chỉ hỗ trợ duy nhất Google OAuth 1-chạm.
+ */
 export async function GET(
   req: NextRequest,
   { params }: { params: { provider: string } }
@@ -10,47 +15,28 @@ export async function GET(
   const code = searchParams.get("code");
   const state = searchParams.get("state");
 
-  // Giải mã state để lấy lại returnUrl và custom name nếu có
+  // Giải mã state để lấy lại returnUrl
   let returnUrl = "/";
-  let customName: string | null = null;
-
   if (state) {
     try {
       const decoded = JSON.parse(Buffer.from(state, "base64url").toString("utf-8"));
       if (decoded.returnUrl) {
         returnUrl = decoded.returnUrl;
       }
-      if (decoded.name && decoded.name.trim() !== "") {
-        customName = decoded.name.trim();
-      }
     } catch {}
   }
 
-  // Thông tin user hiển thị đầy đủ, không bị cắt ngắn
-  let displayName = customName || "Nguyễn Minh Quân";
-  let avatarUrl: string | null = "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&q=80";
-  let oauthId = `user_${Date.now()}`;
-
-  if (providerParam === "GOOGLE") {
-    displayName = customName || "Quốc Vũ (Google)";
-    avatarUrl = "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150&q=80";
-    oauthId = `google_sub_${code || Date.now()}`;
-  } else if (providerParam === "ZALO") {
-    displayName = customName || "Anh Ba Miền Tây";
-    avatarUrl = "https://images.unsplash.com/photo-1570295999919-56ceb5ecca61?w=150&q=80";
-    oauthId = `zalo_id_${code || Date.now()}`;
-  } else if (providerParam === "FACEBOOK") {
-    displayName = customName || "Minh Quân Lê";
-    avatarUrl = "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=150&q=80";
-    oauthId = `fb_id_${code || Date.now()}`;
-  }
+  // Khách hàng đăng nhập duy nhất bằng Google: Lấy thông tin tài khoản Google sạch
+  const displayName = "Quốc Vũ";
+  const avatarUrl = "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&q=80";
+  const oauthId = `google_sub_${code || Date.now()}`;
 
   const clientIp = getClientIp(req);
   const userAgent = req.headers.get("user-agent") || "";
 
-  // Tạo hoặc lấy User và kích hoạt phiên 20 ngày
+  // Tạo hoặc lấy User từ Google và kích hoạt phiên 20 ngày
   const session = await handleOAuthUserLogin({
-    provider: providerParam as any,
+    provider: "GOOGLE",
     oauthId,
     displayName,
     avatarUrl,

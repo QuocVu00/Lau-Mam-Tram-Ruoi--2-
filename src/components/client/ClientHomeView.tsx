@@ -54,8 +54,8 @@ export function ClientHomeView({ promotions, branches }: ClientHomeViewProps) {
         <BranchList branches={branches} />
       </main>
 
-      {/* 3. Nút nổi gọi điện & chỉ đường ghim ở đáy màn hình điện thoại */}
-      <FloatingButtons hotline="0988150150" />
+      {/* 3. Nút nổi liên hệ Hotline (Zalo: 0901019868) ghim ở đáy màn hình điện thoại */}
+      <FloatingButtons hotline="0901019868" zaloUrl="https://zalo.me/0901019868" />
 
       {/* 4. Khung Popup Đăng nhập 1 chạm */}
       <AuthModal

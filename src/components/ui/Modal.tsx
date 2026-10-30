@@ -24,7 +24,7 @@ interface ModalProps {
  * COMPONENT MODAL DÙNG CHUNG (src/components/ui/Modal.tsx)
  * 
  * Mục đích:
- * Hiển thị khung Popup chuẩn Mobile-First (cho Đăng nhập 1 chạm, Form đánh giá...)
+ * Hiển thị khung Popup căn chính giữa màn hình (Center Dialog) cả trên điện thoại và máy tính.
  * Tự động khóa cuộn trang nền của iPhone khi Popup đang mở (chống lỗi trôi trang).
  */
 export function Modal({
@@ -60,7 +60,8 @@ export function Modal({
     <div
       role="dialog"
       aria-modal="true"
-      className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 animate-in fade-in duration-200"
+      // Căn chính giữa toàn bộ màn hình cả chiều ngang và chiều dọc (items-center justify-center)
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 animate-in fade-in duration-200"
     >
       {/* 1. Lớp màn mờ phía sau (Backdrop): Bấm vào đây để đóng Popup */}
       <div
@@ -69,18 +70,14 @@ export function Modal({
         aria-hidden="true"
       />
 
-      {/* 2. Khung nội dung chính của Popup */}
-      {/* Trên điện thoại: Trượt từ dưới lên (Bottom-sheet) | Trên máy tính: Căn giữa màn hình */}
+      {/* 2. Khung nội dung chính của Popup: Nằm nổi bật ở chính giữa màn hình */}
       <div
         className={cn(
           "relative w-full bg-white z-10 shadow-2xl transition-all",
-          "rounded-t-3xl sm:rounded-2xl p-6 max-h-[90vh] overflow-y-auto no-scrollbar",
+          "rounded-3xl p-6 max-h-[85vh] overflow-y-auto no-scrollbar border border-amber-100",
           maxWidthMap[maxWidth]
         )}
       >
-        {/* Nút thanh gạt nhỏ trên đầu dành riêng cho trải nghiệm vuốt trên điện thoại */}
-        <div className="w-12 h-1.5 bg-stone-300 rounded-full mx-auto mb-4 sm:hidden" />
-
         {/* Thanh tiêu đề và nút Đóng (X) */}
         <div className="flex items-center justify-between pb-3 border-b border-stone-100">
           <h3 className="text-lg font-bold text-stone-900 tracking-tight">
@@ -102,4 +99,3 @@ export function Modal({
     </div>
   );
 }
-

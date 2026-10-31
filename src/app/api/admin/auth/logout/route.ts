@@ -1,5 +1,5 @@
 import { getClearAdminCookieHeader } from "@/server/auth";
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 
 export async function POST() {
   const response = NextResponse.json({
@@ -10,3 +10,8 @@ export async function POST() {
   return response;
 }
 
+export async function GET(req: NextRequest) {
+  const response = NextResponse.redirect(new URL("/admin/login", req.url));
+  response.headers.append("Set-Cookie", getClearAdminCookieHeader());
+  return response;
+}

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 import { ShieldAlert, Lock, User, ArrowRight, CheckCircle2 } from "lucide-react";
 
@@ -10,20 +10,6 @@ export default function AdminLoginPage() {
   const [password, setPassword] = useState("admin123");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
-
-  // Nếu đã đăng nhập Admin từ trước, tự động chuyển vào /admin
-  useEffect(() => {
-    async function checkExisting() {
-      try {
-        const res = await fetch("/api/admin/auth/me");
-        const json = await res.json();
-        if (json.authenticated) {
-          router.replace("/admin");
-        }
-      } catch {}
-    }
-    checkExisting();
-  }, [router]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -39,7 +25,7 @@ export default function AdminLoginPage() {
 
       const data = await res.json();
       if (data.success) {
-        router.push("/admin");
+        window.location.href = "/admin";
       } else {
         setError(data.error || "Tên đăng nhập hoặc mật khẩu không chính xác");
       }

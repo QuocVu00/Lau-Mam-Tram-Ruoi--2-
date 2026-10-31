@@ -15,6 +15,13 @@ import {
   Plus,
   Calendar,
   LogOut,
+  Upload,
+  Image as ImageIcon,
+  Check,
+  X,
+  Loader2,
+  ChevronRight,
+  Award,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -27,6 +34,44 @@ export default function AdminDashboardClient() {
   const [branchReviews, setBranchReviews] = useState<any[]>([]);
   const [promotions, setPromotions] = useState<any[]>([]);
   const [activeTab, setActiveTab] = useState<"REVIEWS" | "PROMOTIONS">("REVIEWS");
+  const [reviewStatusFilter, setReviewStatusFilter] = useState<"ALL" | "PUBLIC" | "SHADOW_HIDDEN">("ALL");
+  const [showRatingModal, setShowRatingModal] = useState(false);
+  const [showReviewsSection, setShowReviewsSection] = useState(false);
+  const [highlightSection, setHighlightSection] = useState<"BRANCHES" | "REVIEWS" | "PROMOTIONS" | null>(null);
+
+  // Điều hướng đúng vai trò khi nhấp vào từng thẻ tổng quan:
+  const handleCardClickBranches = () => {
+    setActiveTab("REVIEWS");
+    setHighlightSection("BRANCHES");
+    setTimeout(() => {
+      document.getElementById("branch-section")?.scrollIntoView({ behavior: "smooth", block: "start" });
+    }, 50);
+    setTimeout(() => setHighlightSection(null), 2500);
+  };
+
+  const handleCardClickReviews = () => {
+    setActiveTab("REVIEWS");
+    setReviewStatusFilter("PUBLIC");
+    setShowReviewsSection(true);
+    setHighlightSection("REVIEWS");
+    setTimeout(() => {
+      document.getElementById("reviews-section")?.scrollIntoView({ behavior: "smooth", block: "start" });
+    }, 100);
+    setTimeout(() => setHighlightSection(null), 2500);
+  };
+
+  const handleCardClickRatings = () => {
+    setShowRatingModal(true);
+  };
+
+  const handleCardClickPromotions = () => {
+    setActiveTab("PROMOTIONS");
+    setHighlightSection("PROMOTIONS");
+    setTimeout(() => {
+      document.getElementById("promotions-section")?.scrollIntoView({ behavior: "smooth", block: "start" });
+    }, 50);
+    setTimeout(() => setHighlightSection(null), 2500);
+  };
 
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState(false);
@@ -36,7 +81,68 @@ export default function AdminDashboardClient() {
   const [promoTitle, setPromoTitle] = useState("");
   const [promoContent, setPromoContent] = useState("");
   const [promoBanner, setPromoBanner] = useState("");
-  const [promoMinutes, setPromoMinutes] = useState(5);
+  const [promoDays, setPromoDays] = useState(7);
+  const [promoEndDate, setPromoEndDate] = useState(() => {
+    const d = new Date();
+    d.setDate(d.getDate() + 7);
+    return d.toISOString().split("T")[0];
+  });
+  const [bannerUploading, setBannerUploading] = useState(false);
+  const [customUrlMode, setCustomUrlMode] = useState(false);
+
+  // Xử lý chọn số ngày hoặc ngày kết thúc cụ thể
+  const handleSetPromoDays = (days: number) => {
+    const d = new Date();
+    d.setDate(d.getDate() + days);
+    setPromoDays(days);
+    setPromoEndDate(d.toISOString().split("T")[0]);
+  };
+
+  const handleDateChange = (dateStr: string) => {
+    setPromoEndDate(dateStr);
+    const target = new Date(dateStr);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const diffTime = target.getTime() - today.getTime();
+    const diffDays = Math.max(1, Math.ceil(diffTime / (1000 * 60 * 60 * 24)));
+    setPromoDays(diffDays);
+  };
+
+  // Thư viện ảnh quán có sẵn & ảnh mới tải lên
+  const [libraryImages, setLibraryImages] = useState<
+    Array<{ id: string; url: string; title: string; isCustom?: boolean }>
+  >([
+    {
+      id: "lau-mam-1",
+      url: "https://images.unsplash.com/photo-1544025162-d76694265947?w=1200&q=80",
+      title: "Lẩu mắm 150k trứ danh",
+    },
+    {
+      id: "hai-san-2",
+      url: "https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=1200&q=80",
+      title: "Mâm topping hải sản",
+    },
+    {
+      id: "rau-dong-3",
+      url: "https://images.unsplash.com/photo-1552566626-52f8b828add9?w=1200&q=80",
+      title: "Đĩa rau đồng miệt vườn",
+    },
+    {
+      id: "khong-gian-4",
+      url: "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=1200&q=80",
+      title: "Không gian quán ấm cúng",
+    },
+    {
+      id: "sum-hop-5",
+      url: "https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=1200&q=80",
+      title: "Mâm tiệc sum họp",
+    },
+    {
+      id: "logo-brand",
+      url: "/images/logo.jpg",
+      title: "Logo Quán Trăm Rưỡi",
+    },
+  ]);
 
   // 1. Tải Overview & Khuyến mãi
   const loadOverview = useCallback(async () => {
@@ -117,6 +223,45 @@ export default function AdminDashboardClient() {
     }
   };
 
+  // Tải ảnh từ thiết bị lên server và thêm ngay vào thư viện
+  const handleBannerUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setBannerUploading(true);
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+
+      const res = await fetch("/api/upload", {
+        method: "POST",
+        body: formData,
+      });
+
+      const json = await res.json();
+      if (json.success && json.data?.file_url) {
+        const uploadedUrl = json.data.file_url;
+        setPromoBanner(uploadedUrl);
+        // Thêm vào đầu danh sách thư viện ảnh
+        const newImgItem = {
+          id: `upload_${Date.now()}`,
+          url: uploadedUrl,
+          title: file.name.length > 20 ? file.name.substring(0, 18) + "..." : file.name,
+          isCustom: true,
+        };
+        setLibraryImages((prev) => [newImgItem, ...prev]);
+      } else {
+        alert(json.error || "Tải ảnh lên thất bại. Vui lòng thử lại.");
+      }
+    } catch (err) {
+      console.error("Lỗi tải ảnh banner:", err);
+      alert("Đã xảy ra lỗi khi tải ảnh. Vui lòng thử lại!");
+    } finally {
+      setBannerUploading(false);
+      e.target.value = "";
+    }
+  };
+
   // 4. Tạo Khuyến mãi mới
   const handleCreatePromo = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -125,7 +270,10 @@ export default function AdminDashboardClient() {
     setActionLoading(true);
     try {
       const startAt = new Date().toISOString();
-      const endAt = new Date(Date.now() + promoMinutes * 60 * 1000).toISOString();
+      // Kết thúc vào 23:59:59 của ngày đã chọn
+      const [year, month, day] = promoEndDate.split("-").map(Number);
+      const end = new Date(year, month - 1, day, 23, 59, 59, 999);
+      const endAt = end.toISOString();
 
       const res = await fetch("/api/admin/promotions", {
         method: "POST",
@@ -145,6 +293,8 @@ export default function AdminDashboardClient() {
       if (json.success) {
         setPromoTitle("");
         setPromoContent("");
+        setPromoBanner("");
+        handleSetPromoDays(7);
         setShowPromoForm(false);
         await loadPromotions();
         await loadOverview();
@@ -211,7 +361,7 @@ export default function AdminDashboardClient() {
             type="button"
             onClick={async () => {
               await fetch("/api/admin/auth/logout", { method: "POST" });
-              router.push("/admin/login");
+              window.location.href = "/admin/login";
             }}
             className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-rose-950 hover:bg-rose-900 text-rose-300 border border-rose-800 text-xs font-bold transition-colors"
           >
@@ -222,42 +372,100 @@ export default function AdminDashboardClient() {
       </header>
 
       <main className="flex-1 max-w-6xl mx-auto w-full p-4 sm:p-6 space-y-6">
-        {/* Thống kê Tổng quan (Overview Cards) */}
+        {/* Thống kê Tổng quan (Overview Cards - Nhấp vào để thực hiện đúng vai trò) */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
-          <div className="bg-stone-800/80 border border-stone-700/80 rounded-2xl p-4">
-            <div className="flex items-center gap-2 text-stone-400 text-xs font-bold mb-1">
-              <Building2 className="w-4 h-4 text-amber-500" />
-              <span>Tổng chi nhánh</span>
+          {/* Card 1: Tổng chi nhánh -> Chuyển đến chọn chi nhánh */}
+          <button
+            type="button"
+            onClick={handleCardClickBranches}
+            className="text-left bg-stone-800/80 border border-stone-700/80 hover:border-amber-500/80 hover:bg-stone-800 rounded-2xl p-4 transition-all duration-200 hover:scale-[1.02] active:scale-[0.98] shadow-md group cursor-pointer flex flex-col justify-between"
+          >
+            <div>
+              <div className="flex items-center justify-between text-stone-400 text-xs font-bold mb-1">
+                <div className="flex items-center gap-1.5">
+                  <Building2 className="w-4 h-4 text-amber-500" />
+                  <span>Tổng chi nhánh</span>
+                </div>
+                <ChevronRight className="w-3.5 h-3.5 text-stone-500 group-hover:text-amber-400 group-hover:translate-x-0.5 transition-all" />
+              </div>
+              <p className="text-2xl font-black text-white">{overview?.totalBranches ?? 5}</p>
             </div>
-            <p className="text-2xl font-black text-white">{overview?.totalBranches ?? 5}</p>
-          </div>
+            <p className="text-[10px] text-amber-400 font-medium mt-2 flex items-center gap-1">
+              <span>Xem & chọn chi nhánh</span>
+              <span>→</span>
+            </p>
+          </button>
 
-          <div className="bg-stone-800/80 border border-stone-700/80 rounded-2xl p-4">
-            <div className="flex items-center gap-2 text-stone-400 text-xs font-bold mb-1">
-              <MessageSquare className="w-4 h-4 text-emerald-500" />
-              <span>Tổng đánh giá Public</span>
+          {/* Card 2: Tổng đánh giá Public -> Chuyển đến kiểm duyệt đánh giá và lọc Public */}
+          <button
+            type="button"
+            onClick={handleCardClickReviews}
+            className="text-left bg-stone-800/80 border border-stone-700/80 hover:border-emerald-500/80 hover:bg-stone-800 rounded-2xl p-4 transition-all duration-200 hover:scale-[1.02] active:scale-[0.98] shadow-md group cursor-pointer flex flex-col justify-between"
+          >
+            <div>
+              <div className="flex items-center justify-between text-stone-400 text-xs font-bold mb-1">
+                <div className="flex items-center gap-1.5">
+                  <MessageSquare className="w-4 h-4 text-emerald-500" />
+                  <span>Tổng đánh giá Public</span>
+                </div>
+                <ChevronRight className="w-3.5 h-3.5 text-stone-500 group-hover:text-emerald-400 group-hover:translate-x-0.5 transition-all" />
+              </div>
+              <p className="text-2xl font-black text-white">{overview?.totalPublicReviews ?? 20}</p>
             </div>
-            <p className="text-2xl font-black text-white">{overview?.totalPublicReviews ?? 20}</p>
-          </div>
+            <p className="text-[10px] text-emerald-400 font-medium mt-2 flex items-center gap-1">
+              <span>Xem đánh giá Public</span>
+              <span>→</span>
+            </p>
+          </button>
 
-          <div className="bg-stone-800/80 border border-stone-700/80 rounded-2xl p-4">
-            <div className="flex items-center gap-2 text-stone-400 text-xs font-bold mb-1">
-              <Star className="w-4 h-4 text-amber-400 fill-amber-400" />
-              <span>Điểm TB Toàn Hệ Thống</span>
+          {/* Card 3: Điểm TB Toàn Hệ Thống -> Mở bảng xếp hạng và chi tiết điểm từng chi nhánh */}
+          <button
+            type="button"
+            onClick={handleCardClickRatings}
+            className="text-left bg-stone-800/80 border border-stone-700/80 hover:border-amber-400/80 hover:bg-stone-800 rounded-2xl p-4 transition-all duration-200 hover:scale-[1.02] active:scale-[0.98] shadow-md group cursor-pointer flex flex-col justify-between"
+          >
+            <div>
+              <div className="flex items-center justify-between text-stone-400 text-xs font-bold mb-1">
+                <div className="flex items-center gap-1.5">
+                  <Star className="w-4 h-4 text-amber-400 fill-amber-400" />
+                  <span>Điểm TB Toàn Hệ Thống</span>
+                </div>
+                <ChevronRight className="w-3.5 h-3.5 text-stone-500 group-hover:text-amber-400 group-hover:translate-x-0.5 transition-all" />
+              </div>
+              <div className="flex items-center gap-1.5">
+                <p className="text-2xl font-black text-amber-400">
+                  {(overview?.overallAvgRating ?? overview?.avgRatingAllBranches ?? 4.8).toFixed(1)}
+                </p>
+                <Star className="w-5 h-5 text-amber-400 fill-amber-400" />
+              </div>
             </div>
-            <div className="flex items-center gap-1.5">
-              <p className="text-2xl font-black text-amber-400">{overview?.avgRatingAllBranches?.toFixed(1) ?? "4.8"}</p>
-              <Star className="w-5 h-5 text-amber-400 fill-amber-400" />
-            </div>
-          </div>
+            <p className="text-[10px] text-amber-400 font-medium mt-2 flex items-center gap-1">
+              <span>Bảng xếp hạng 5 chi nhánh</span>
+              <span>→</span>
+            </p>
+          </button>
 
-          <div className="bg-stone-800/80 border border-stone-700/80 rounded-2xl p-4">
-            <div className="flex items-center gap-2 text-stone-400 text-xs font-bold mb-1">
-              <Sparkles className="w-4 h-4 text-purple-400" />
-              <span>Khuyến mãi hiệu lực</span>
+          {/* Card 4: Khuyến mãi hiệu lực -> Chuyển sang tab quản lý khuyến mãi */}
+          <button
+            type="button"
+            onClick={handleCardClickPromotions}
+            className="text-left bg-stone-800/80 border border-stone-700/80 hover:border-purple-400/80 hover:bg-stone-800 rounded-2xl p-4 transition-all duration-200 hover:scale-[1.02] active:scale-[0.98] shadow-md group cursor-pointer flex flex-col justify-between"
+          >
+            <div>
+              <div className="flex items-center justify-between text-stone-400 text-xs font-bold mb-1">
+                <div className="flex items-center gap-1.5">
+                  <Sparkles className="w-4 h-4 text-purple-400" />
+                  <span>Khuyến mãi hiệu lực</span>
+                </div>
+                <ChevronRight className="w-3.5 h-3.5 text-stone-500 group-hover:text-purple-400 group-hover:translate-x-0.5 transition-all" />
+              </div>
+              <p className="text-2xl font-black text-white">{overview?.activePromotionsCount ?? promotions.length}</p>
             </div>
-            <p className="text-2xl font-black text-white">{overview?.activePromotionsCount ?? promotions.length}</p>
-          </div>
+            <p className="text-[10px] text-purple-400 font-medium mt-2 flex items-center gap-1">
+              <span>Quản lý khuyến mãi</span>
+              <span>→</span>
+            </p>
+          </button>
         </div>
 
         {/* Tab chuyển đổi: Kiểm duyệt Review vs Quản lý Khuyến Mãi */}
@@ -291,74 +499,170 @@ export default function AdminDashboardClient() {
         {activeTab === "REVIEWS" ? (
           <>
             {/* Thanh chọn chi nhánh */}
-            <div className="bg-stone-800/60 border border-stone-700/60 rounded-2xl p-4">
-              <h2 className="text-xs font-bold text-amber-400 uppercase tracking-wider mb-3">
-                Chọn chi nhánh để kiểm duyệt
-              </h2>
+            <div
+              id="branch-section"
+              className={cn(
+                "bg-stone-800/60 border rounded-2xl p-4 transition-all duration-300",
+                highlightSection === "BRANCHES"
+                  ? "border-amber-400 ring-2 ring-amber-400/50 shadow-xl bg-stone-800/90"
+                  : "border-stone-700/60"
+              )}
+            >
+              <div className="flex items-center justify-between mb-3">
+                <h2 className="text-xs font-bold text-amber-400 uppercase tracking-wider flex items-center gap-2">
+                  <Building2 className="w-3.5 h-3.5" />
+                  <span>Chọn chi nhánh để kiểm duyệt</span>
+                </h2>
+                <span className="text-[11px] text-stone-400 font-mono">
+                  {overview?.branches?.length || 5} chi nhánh hoạt động
+                </span>
+              </div>
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
                 {overview?.branches?.map((b: any) => (
                   <button
                     key={b.id}
                     type="button"
-                    onClick={() => setSelectedBranchId(b.id)}
+                    onClick={() => {
+                      setSelectedBranchId(b.id);
+                      setShowReviewsSection(true);
+                      setTimeout(() => {
+                        document.getElementById("reviews-section")?.scrollIntoView({ behavior: "smooth", block: "start" });
+                      }, 100);
+                    }}
                     className={cn(
-                      "p-3 rounded-xl border text-left transition-all",
-                      selectedBranchId === b.id
-                        ? "bg-stone-900 border-amber-500 shadow-sm"
-                        : "bg-stone-800/40 border-stone-700/60 hover:border-stone-600"
+                      "p-3 rounded-xl border text-left transition-all group",
+                      selectedBranchId === b.id && showReviewsSection
+                        ? "bg-stone-900 border-amber-500 shadow-md ring-1 ring-amber-500/40"
+                        : "bg-stone-800/40 border-stone-700/60 hover:border-amber-500/60 hover:bg-stone-800"
                     )}
                   >
                     <div className="flex items-center justify-between">
                       <p className="text-xs font-bold text-white truncate max-w-[200px]">{b.name}</p>
                       <span className="text-xs text-amber-400 font-extrabold flex items-center gap-1">
-                        {b.avg_rating.toFixed(1)} <Star className="w-3 h-3 fill-amber-400" />
+                        {(b.avgRating ?? b.avg_rating ?? 5.0).toFixed(1)} <Star className="w-3 h-3 fill-amber-400" />
                       </span>
                     </div>
                     <div className="flex items-center justify-between text-[11px] text-stone-400 mt-1">
-                      <span>{b.total_reviews} đánh giá</span>
-                      {b.shadowHiddenCount > 0 && (
+                      <span>{b.totalReviews ?? b.total_reviews ?? 0} đánh giá</span>
+                      {(b.pendingShadowCount ?? b.shadowHiddenCount ?? 0) > 0 && (
                         <span className="text-amber-400 font-bold bg-amber-950/80 px-2 py-0.5 rounded-full border border-amber-800/60">
-                          {b.shadowHiddenCount} đang ẩn (Shadowban)
+                          {b.pendingShadowCount ?? b.shadowHiddenCount} đang ẩn (Shadowban)
                         </span>
                       )}
+                    </div>
+                    <div className="flex items-center justify-between text-[10px] text-stone-500 group-hover:text-amber-400 mt-2 pt-1.5 border-t border-stone-800/60 font-medium">
+                      <span>
+                        {selectedBranchId === b.id && showReviewsSection ? "Đang mở kiểm duyệt đánh giá" : "Nhấp mở kiểm duyệt đánh giá"}
+                      </span>
+                      <span>{selectedBranchId === b.id && showReviewsSection ? "▼" : "→"}</span>
                     </div>
                   </button>
                 ))}
               </div>
             </div>
 
-            {/* Danh sách bài đánh giá cần kiểm duyệt */}
-            <div className="bg-stone-800/60 border border-stone-700/60 rounded-2xl p-4">
-              <div className="flex items-center justify-between mb-4">
-                <div>
-                  <h2 className="text-sm font-bold text-white flex items-center gap-2">
-                    <span>Kiểm Duyệt Đánh Giá</span>
-                    <span className="text-xs font-mono text-stone-400 bg-stone-900 px-2 py-0.5 rounded-full">
-                      ({branchReviews.length})
-                    </span>
-                  </h2>
-                  <p className="text-[11px] text-stone-400 mt-0.5">
-                    Chế độ Shadowban giữ cho người đăng vẫn thấy bài nhưng ẩn khỏi khách khác và không tính điểm
-                  </p>
+            {/* Danh sách bài đánh giá cần kiểm duyệt (Chỉ hiện lên khi nhấp vào) */}
+            {showReviewsSection && (
+              <div
+                id="reviews-section"
+                className={cn(
+                  "bg-stone-800/60 border rounded-2xl p-4 transition-all duration-300 animate-in fade-in slide-in-from-top-3",
+                  highlightSection === "REVIEWS"
+                    ? "border-emerald-400 ring-2 ring-emerald-400/50 shadow-xl bg-stone-800/90"
+                    : "border-stone-700/60"
+                )}
+              >
+                <div className="flex items-center justify-between mb-4">
+                  <div>
+                    <h2 className="text-sm font-bold text-white flex items-center gap-2">
+                      <MessageSquare className="w-4 h-4 text-emerald-400" />
+                      <span>
+                        Kiểm Duyệt Đánh Giá - {overview?.branches?.find((b: any) => b.id === selectedBranchId)?.name || "Chi nhánh"}
+                      </span>
+                      <span className="text-xs font-mono text-stone-400 bg-stone-900 px-2 py-0.5 rounded-full">
+                        ({branchReviews.filter((r) => reviewStatusFilter === "ALL" ? true : r.status === reviewStatusFilter).length} / {branchReviews.length})
+                      </span>
+                    </h2>
+                    <p className="text-[11px] text-stone-400 mt-0.5">
+                      Chế độ Shadowban giữ cho người đăng vẫn thấy bài nhưng ẩn khỏi khách khác và không tính điểm
+                    </p>
+                  </div>
+
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setShowReviewsSection(false)}
+                      className="flex items-center gap-1 px-3 py-1.5 rounded-xl bg-stone-900 hover:bg-stone-800 border border-stone-700 text-stone-300 hover:text-white text-xs font-bold transition-all shadow-sm"
+                      title="Thu gọn danh sách đánh giá"
+                    >
+                      <X className="w-3.5 h-3.5" />
+                      <span>Đóng / Thu gọn</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => loadReviews(selectedBranchId)}
+                      className="p-2 rounded-xl bg-stone-900 hover:bg-stone-800 text-stone-300 transition-colors"
+                      title="Tải lại danh sách"
+                    >
+                      <RefreshCw className={cn("w-4 h-4", actionLoading && "animate-spin")} />
+                    </button>
+                  </div>
                 </div>
 
+              {/* Bộ lọc trạng thái đánh giá */}
+              <div className="flex items-center gap-2 mb-4 pb-3 border-b border-stone-800 flex-wrap">
+                <span className="text-[11px] text-stone-400 font-medium mr-1">Bộ lọc hiển thị:</span>
                 <button
                   type="button"
-                  onClick={() => loadReviews(selectedBranchId)}
-                  className="p-2 rounded-xl bg-stone-900 hover:bg-stone-800 text-stone-300 transition-colors"
-                  title="Tải lại danh sách"
+                  onClick={() => setReviewStatusFilter("ALL")}
+                  className={cn(
+                    "px-3 py-1 rounded-lg text-xs font-bold transition border",
+                    reviewStatusFilter === "ALL"
+                      ? "bg-amber-500 text-stone-950 border-amber-400 shadow-sm"
+                      : "bg-stone-900 hover:bg-stone-800 text-stone-300 border-stone-800"
+                  )}
                 >
-                  <RefreshCw className={cn("w-4 h-4", actionLoading && "animate-spin")} />
+                  Tất cả ({branchReviews.length})
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setReviewStatusFilter("PUBLIC")}
+                  className={cn(
+                    "px-3 py-1 rounded-lg text-xs font-bold transition border",
+                    reviewStatusFilter === "PUBLIC"
+                      ? "bg-emerald-500 text-stone-950 border-emerald-400 shadow-sm"
+                      : "bg-stone-900 hover:bg-stone-800 text-emerald-400 border-stone-800"
+                  )}
+                >
+                  Công khai Public ({branchReviews.filter((r) => r.status === "PUBLIC").length})
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setReviewStatusFilter("SHADOW_HIDDEN")}
+                  className={cn(
+                    "px-3 py-1 rounded-lg text-xs font-bold transition border",
+                    reviewStatusFilter === "SHADOW_HIDDEN"
+                      ? "bg-amber-500 text-stone-950 border-amber-400 shadow-sm"
+                      : "bg-stone-900 hover:bg-stone-800 text-amber-400 border-stone-800"
+                  )}
+                >
+                  Đang ẩn Shadowban ({branchReviews.filter((r) => r.status === "SHADOW_HIDDEN").length})
                 </button>
               </div>
 
-              {branchReviews.length === 0 ? (
+              {branchReviews.filter((r) => reviewStatusFilter === "ALL" ? true : r.status === reviewStatusFilter).length === 0 ? (
                 <div className="text-center py-12 text-stone-400 text-xs">
-                  Chi nhánh này hiện chưa có bài đánh giá nào.
+                  {reviewStatusFilter === "PUBLIC"
+                    ? "Chi nhánh này không có bài đánh giá Public nào."
+                    : reviewStatusFilter === "SHADOW_HIDDEN"
+                    ? "Chi nhánh này hiện không có bài nào đang bị ẩn Shadowban."
+                    : "Chi nhánh này hiện chưa có bài đánh giá nào."}
                 </div>
               ) : (
                 <div className="space-y-3">
-                  {branchReviews.map((rev) => (
+                  {branchReviews
+                    .filter((r) => reviewStatusFilter === "ALL" ? true : r.status === reviewStatusFilter)
+                    .map((rev) => (
                     <div
                       key={rev.id}
                       className={cn(
@@ -392,7 +696,7 @@ export default function AdminDashboardClient() {
                               </span>
                             </div>
                             <span className="text-[10px] text-stone-500 font-mono">
-                              IP: {rev.ip_address || "::1"} | {new Date(rev.created_at).toLocaleTimeString("vi-VN")}{" "}
+                              IP: {rev.session?.ip_address || rev.ip_address || "::1"} | {new Date(rev.created_at).toLocaleTimeString("vi-VN")}{" "}
                               {new Date(rev.created_at).toLocaleDateString("vi-VN")}
                             </span>
                           </div>
@@ -468,10 +772,19 @@ export default function AdminDashboardClient() {
                 </div>
               )}
             </div>
+            )}
           </>
         ) : (
           /* TAB QUẢN LÝ KHUYẾN MÃI */
-          <div className="bg-stone-800/60 border border-stone-700/60 rounded-2xl p-4">
+          <div
+            id="promotions-section"
+            className={cn(
+              "bg-stone-800/60 border rounded-2xl p-4 transition-all duration-300",
+              highlightSection === "PROMOTIONS"
+                ? "border-purple-400 ring-2 ring-purple-400/50 shadow-xl bg-stone-800/90"
+                : "border-stone-700/60"
+            )}
+          >
             <div className="flex items-center justify-between mb-4">
               <div>
                 <h2 className="text-sm font-bold text-white">Chương Trình Khuyến Mãi</h2>
@@ -494,7 +807,7 @@ export default function AdminDashboardClient() {
             {showPromoForm && (
               <form onSubmit={handleCreatePromo} className="mb-6 bg-stone-900 p-4 rounded-xl border border-stone-700/80 space-y-3">
                 <h3 className="text-xs font-bold text-amber-400 uppercase tracking-wide">
-                  Tạo khuyến mãi thử nghiệm (Tự ẩn sau thời gian định sẵn)
+                  Tạo chương trình khuyến mãi (Tự động kết thúc theo ngày)
                 </h3>
                 <div>
                   <label className="block text-[11px] text-stone-400 mb-1">Tiêu đề khuyến mãi:</label>
@@ -518,27 +831,221 @@ export default function AdminDashboardClient() {
                     required
                   />
                 </div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  <div>
-                    <label className="block text-[11px] text-stone-400 mb-1">URL ảnh Banner (tùy chọn):</label>
-                    <input
-                      type="url"
-                      value={promoBanner}
-                      onChange={(e) => setPromoBanner(e.target.value)}
-                      placeholder="https://images.unsplash.com/..."
-                      className="w-full px-3 py-2 bg-stone-950 border border-stone-800 rounded-lg text-xs text-white"
-                    />
+
+                {/* THỜI GIAN HIỆU LỰC THEO NGÀY */}
+                <div className="bg-stone-950/70 p-3 rounded-xl border border-stone-800 space-y-2.5">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1.5">
+                    <label className="text-[11px] font-semibold text-stone-300 flex items-center gap-1.5">
+                      <Calendar className="w-3.5 h-3.5 text-amber-400" />
+                      <span>Thời hạn chương trình (Hết hạn theo ngày):</span>
+                    </label>
+                    <span className="text-[11px] text-amber-400 font-mono font-medium">
+                      Hết hạn vào 23:59 ngày {promoEndDate.split("-").reverse().join("/")} ({promoDays} ngày)
+                    </span>
                   </div>
-                  <div>
-                    <label className="block text-[11px] text-stone-400 mb-1">Hết hạn sau (phút):</label>
+
+                  <div className="flex flex-wrap items-center gap-2">
+                    <div className="flex items-center gap-1.5 flex-wrap">
+                      {[1, 3, 7, 14, 30].map((days) => (
+                        <button
+                          key={days}
+                          type="button"
+                          onClick={() => handleSetPromoDays(days)}
+                          className={cn(
+                            "px-2.5 py-1 rounded-lg text-xs font-semibold transition border",
+                            promoDays === days
+                              ? "bg-amber-500 text-stone-950 border-amber-400 shadow-sm"
+                              : "bg-stone-900 hover:bg-stone-800 text-stone-300 border-stone-800 hover:border-stone-700"
+                          )}
+                        >
+                          {days === 1
+                            ? "1 ngày"
+                            : days === 7
+                            ? "7 ngày (1 tuần)"
+                            : days === 14
+                            ? "14 ngày (2 tuần)"
+                            : days === 30
+                            ? "30 ngày (1 tháng)"
+                            : `${days} ngày`}
+                        </button>
+                      ))}
+                    </div>
+
+                    <div className="flex items-center gap-2 ml-auto">
+                      <span className="text-[11px] text-stone-400">Hoặc chọn ngày cụ thể:</span>
+                      <input
+                        type="date"
+                        min={new Date().toISOString().split("T")[0]}
+                        value={promoEndDate}
+                        onChange={(e) => handleDateChange(e.target.value)}
+                        className="px-2.5 py-1 bg-stone-900 border border-stone-700 rounded-lg text-xs text-white font-mono focus:border-amber-400 outline-none"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* THƯ VIỆN ẢNH VÀ TẢI LÊN BANNER */}
+                <div className="pt-2 border-t border-stone-800/80 space-y-3">
+                  <div className="flex items-center justify-between">
+                    <label className="text-[11px] font-semibold text-stone-300 flex items-center gap-1.5">
+                      <ImageIcon className="w-3.5 h-3.5 text-amber-400" />
+                      <span>Ảnh Banner Khuyến Mãi:</span>
+                    </label>
+                    {promoBanner && (
+                      <button
+                        type="button"
+                        onClick={() => setPromoBanner("")}
+                        className="text-[10px] text-red-400 hover:text-red-300 flex items-center gap-1 transition"
+                      >
+                        <Trash2 className="w-3 h-3" />
+                        <span>Gỡ ảnh đã chọn</span>
+                      </button>
+                    )}
+                  </div>
+
+                  {/* Nút nhấp vào để thêm ảnh từ thiết bị vào thư viện */}
+                  <label
+                    htmlFor="promo-file-input"
+                    className={cn(
+                      "flex flex-col sm:flex-row items-center justify-center gap-3 p-3.5 border-2 border-dashed rounded-xl transition cursor-pointer text-center sm:text-left",
+                      bannerUploading
+                        ? "border-amber-400/60 bg-amber-500/5 cursor-wait"
+                        : "border-stone-700 hover:border-amber-500/80 bg-stone-950/70 hover:bg-stone-950"
+                    )}
+                  >
                     <input
-                      type="number"
-                      min={1}
-                      max={1440}
-                      value={promoMinutes}
-                      onChange={(e) => setPromoMinutes(Number(e.target.value))}
-                      className="w-full px-3 py-2 bg-stone-950 border border-stone-800 rounded-lg text-xs text-white font-mono"
+                      id="promo-file-input"
+                      type="file"
+                      accept="image/*"
+                      onChange={handleBannerUpload}
+                      disabled={bannerUploading}
+                      className="hidden"
                     />
+                    {bannerUploading ? (
+                      <div className="flex items-center gap-2 text-amber-400 text-xs py-1">
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                        <span className="font-medium">Đang tải và tối ưu ảnh lên thư viện...</span>
+                      </div>
+                    ) : (
+                      <>
+                        <div className="p-2 rounded-xl bg-amber-500/10 text-amber-400 border border-amber-500/20">
+                          <Upload className="w-4 h-4" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-xs font-bold text-white flex items-center gap-1.5 justify-center sm:justify-start">
+                            <span>Nhấp vào để thêm ảnh trong thư viện</span>
+                            <span className="text-[10px] px-1.5 py-0.2 rounded bg-amber-500/20 text-amber-300 border border-amber-500/30 font-normal">
+                              Từ máy / thiết bị
+                            </span>
+                          </p>
+                          <p className="text-[10px] text-stone-400 mt-0.5">
+                            Ảnh tải lên sẽ được tự động thêm vào thư viện ảnh bên dưới để bạn sử dụng ngay lập tức
+                          </p>
+                        </div>
+                      </>
+                    )}
+                  </label>
+
+                  {/* Thư viện ảnh trong hệ thống */}
+                  <div>
+                    <div className="flex items-center justify-between mb-1.5">
+                      <span className="text-[11px] font-medium text-stone-400">
+                        Thư viện ảnh quán có sẵn (Nhấp chọn ảnh để áp dụng):
+                      </span>
+                      <span className="text-[10px] text-stone-500">
+                        {libraryImages.length} ảnh trong thư viện
+                      </span>
+                    </div>
+
+                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-2">
+                      {libraryImages.map((img) => {
+                        const isSelected = promoBanner === img.url;
+                        return (
+                          <button
+                            key={img.id}
+                            type="button"
+                            onClick={() => setPromoBanner(img.url)}
+                            className={cn(
+                              "relative group rounded-lg overflow-hidden border text-left transition flex flex-col bg-stone-950",
+                              isSelected
+                                ? "border-amber-400 ring-2 ring-amber-400/60"
+                                : "border-stone-800 hover:border-stone-600"
+                            )}
+                          >
+                            <div className="aspect-[4/3] w-full overflow-hidden relative bg-stone-900">
+                              <img
+                                src={img.url}
+                                alt={img.title}
+                                className="w-full h-full object-cover group-hover:scale-105 transition duration-300"
+                              />
+                              {isSelected && (
+                                <div className="absolute inset-0 bg-amber-500/25 backdrop-blur-[1px] flex items-center justify-center">
+                                  <span className="px-1.5 py-0.5 rounded bg-amber-500 text-stone-950 text-[10px] font-bold flex items-center gap-1 shadow">
+                                    <Check className="w-3 h-3 stroke-[3]" /> Đang chọn
+                                  </span>
+                                </div>
+                              )}
+                              {img.isCustom && (
+                                <span className="absolute top-1 left-1 px-1 py-0.2 rounded bg-blue-600 text-white text-[9px] font-semibold shadow">
+                                  Mới tải
+                                </span>
+                              )}
+                            </div>
+                            <div className="p-1.5 bg-stone-950">
+                              <p className="text-[10px] text-stone-300 truncate font-medium">{img.title}</p>
+                            </div>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+
+                  {/* Banner Preview khi đã chọn ảnh */}
+                  {promoBanner && (
+                    <div className="p-2.5 rounded-xl bg-stone-950 border border-amber-500/30 flex items-center gap-3">
+                      <div className="w-20 h-12 rounded-lg overflow-hidden flex-shrink-0 bg-stone-900 border border-stone-800 relative">
+                        <img src={promoBanner} alt="Banner Preview" className="w-full h-full object-cover" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-1.5">
+                          <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
+                            ✓ Đã chọn ảnh làm banner
+                          </span>
+                          <span className="text-[11px] text-stone-300 truncate font-medium">
+                            {libraryImages.find((i) => i.url === promoBanner)?.title || "Ảnh Banner Khuyến Mãi"}
+                          </span>
+                        </div>
+                        <p className="text-[10px] text-stone-400 truncate mt-0.5 font-mono">{promoBanner}</p>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => setPromoBanner("")}
+                        className="p-1.5 rounded-lg hover:bg-stone-800 text-stone-400 hover:text-red-400 transition"
+                        title="Gỡ ảnh"
+                      >
+                        <X className="w-4 h-4" />
+                      </button>
+                    </div>
+                  )}
+
+                  {/* Tùy chọn nhập URL thủ công nếu cần */}
+                  <div>
+                    <button
+                      type="button"
+                      onClick={() => setCustomUrlMode(!customUrlMode)}
+                      className="text-[10px] text-stone-400 hover:text-stone-300 underline"
+                    >
+                      {customUrlMode ? "Ẩn tùy chọn nhập link URL" : "Hoặc dán link ảnh trực tiếp (URL ngoài)"}
+                    </button>
+                    {customUrlMode && (
+                      <input
+                        type="url"
+                        value={promoBanner}
+                        onChange={(e) => setPromoBanner(e.target.value)}
+                        placeholder="https://..."
+                        className="mt-1.5 w-full px-3 py-1.5 bg-stone-950 border border-stone-800 rounded-lg text-xs text-white font-mono"
+                      />
+                    )}
                   </div>
                 </div>
                 <div className="flex justify-end gap-2 pt-2">
@@ -609,7 +1116,135 @@ export default function AdminDashboardClient() {
             </div>
           </div>
         )}
+
+        {/* MODAL BẢNG XẾP HẠNG & THỐNG KÊ ĐIỂM HỆ THỐNG */}
+        {showRatingModal && (
+          <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
+            <div className="bg-stone-900 border border-amber-500/40 rounded-2xl max-w-lg w-full p-5 space-y-4 shadow-2xl relative">
+              <div className="flex items-center justify-between pb-3 border-b border-stone-800">
+                <div className="flex items-center gap-2">
+                  <div className="p-2 rounded-xl bg-amber-500/10 text-amber-400 border border-amber-500/20">
+                    <Award className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <h3 className="text-sm font-bold text-white">Xếp Hạng & Điểm Đánh Giá Hệ Thống</h3>
+                    <p className="text-[11px] text-stone-400">Thống kê điểm trung bình của toàn bộ 5 chi nhánh</p>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setShowRatingModal(false)}
+                  className="p-1.5 rounded-lg hover:bg-stone-800 text-stone-400 hover:text-white transition"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              {/* Điểm tổng quan */}
+              <div className="p-4 rounded-xl bg-gradient-to-r from-amber-950/40 to-stone-950 border border-amber-500/30 flex items-center justify-between">
+                <div>
+                  <span className="text-[11px] font-bold text-amber-400 uppercase tracking-wider">
+                    Điểm Trung Bình Toàn Chuỗi
+                  </span>
+                  <p className="text-3xl font-black text-amber-400 flex items-center gap-1.5 mt-0.5">
+                    {(overview?.overallAvgRating ?? 4.8).toFixed(1)}
+                    <Star className="w-6 h-6 fill-amber-400 text-amber-400 inline" />
+                  </p>
+                </div>
+                <div className="text-right">
+                  <span className="text-xs font-semibold text-stone-300">Tổng đánh giá Public</span>
+                  <p className="text-xl font-black text-white">{overview?.totalPublicReviews ?? 20} bài</p>
+                </div>
+              </div>
+
+              {/* Danh sách 5 chi nhánh xếp theo điểm số */}
+              <div className="space-y-2">
+                <p className="text-[11px] font-bold text-stone-400 uppercase tracking-wider">
+                  Bảng xếp hạng 5 chi nhánh (Điểm cao nhất xếp trên):
+                </p>
+                <div className="space-y-2 max-h-72 overflow-y-auto pr-1">
+                  {([...(overview?.branches || [])])
+                    .sort((a, b) => (b.avgRating ?? b.avg_rating ?? 0) - (a.avgRating ?? a.avg_rating ?? 0))
+                    .map((b, idx) => (
+                      <div
+                        key={b.id}
+                        className={cn(
+                          "p-3 rounded-xl border flex items-center justify-between gap-3 transition-colors",
+                          selectedBranchId === b.id
+                            ? "bg-amber-500/10 border-amber-500/60"
+                            : "bg-stone-950 border-stone-800 hover:border-stone-700"
+                        )}
+                      >
+                        <div className="flex items-center gap-3 min-w-0">
+                          <div
+                            className={cn(
+                              "w-6 h-6 rounded-full flex items-center justify-center text-xs font-black flex-shrink-0",
+                              idx === 0
+                                ? "bg-amber-400 text-stone-950 shadow"
+                                : idx === 1
+                                ? "bg-stone-300 text-stone-950"
+                                : idx === 2
+                                ? "bg-amber-700 text-white"
+                                : "bg-stone-800 text-stone-400"
+                            )}
+                          >
+                            {idx + 1}
+                          </div>
+                          <div className="min-w-0">
+                            <p className="text-xs font-bold text-white truncate">{b.name}</p>
+                            <p className="text-[10px] text-stone-400 truncate">{b.address}</p>
+                          </div>
+                        </div>
+
+                        <div className="flex items-center gap-3 flex-shrink-0">
+                          <div className="text-right">
+                            <p className="text-xs font-extrabold text-amber-400 flex items-center gap-1 justify-end">
+                              {(b.avgRating ?? b.avg_rating ?? 5.0).toFixed(1)}
+                              <Star className="w-3 h-3 fill-amber-400 text-amber-400" />
+                            </p>
+                            <p className="text-[10px] text-stone-400">
+                              {b.totalReviews ?? b.total_reviews ?? 0} đánh giá
+                            </p>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setSelectedBranchId(b.id);
+                              setShowRatingModal(false);
+                              setActiveTab("REVIEWS");
+                              setHighlightSection("REVIEWS");
+                              setTimeout(() => {
+                                document.getElementById("reviews-section")?.scrollIntoView({
+                                  behavior: "smooth",
+                                  block: "start",
+                                });
+                              }, 100);
+                              setTimeout(() => setHighlightSection(null), 2500);
+                            }}
+                            className="px-2.5 py-1 rounded-lg bg-amber-500/20 hover:bg-amber-500 text-amber-300 hover:text-stone-950 text-xs font-bold transition border border-amber-500/30"
+                          >
+                            Xem review
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                </div>
+              </div>
+
+              <div className="pt-2 flex justify-end">
+                <button
+                  type="button"
+                  onClick={() => setShowRatingModal(false)}
+                  className="px-4 py-1.5 rounded-xl bg-stone-800 hover:bg-stone-700 text-stone-200 text-xs font-bold transition"
+                >
+                  Đóng
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </main>
     </div>
   );
 }
+

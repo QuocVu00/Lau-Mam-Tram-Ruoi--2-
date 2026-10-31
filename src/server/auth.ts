@@ -3,7 +3,7 @@ import crypto from "crypto";
 import { cookies } from "next/headers";
 
 export const COOKIE_SESSION_NAME = "lau_mam_session";
-export const COOKIE_ADMIN_NAME = "lau_mam_admin_session";
+export const COOKIE_ADMIN_NAME = "lau_mam_admin_auth_v2";
 export const SESSION_MAX_AGE_SECONDS = 20 * 24 * 60 * 60; // 20 ngày = 1,728,000 giây
 export const ADMIN_MAX_AGE_SECONDS = 24 * 60 * 60; // Admin phiên 24h
 
@@ -315,13 +315,13 @@ export function getAdminSessionFromRequest(req: Request): boolean {
 }
 
 /**
- * Cookie Quản trị viên (Thời hạn 24 giờ)
+ * Cookie Quản trị viên (Chỉ lưu theo phiên làm việc Session Cookie, tắt trình duyệt là hết hạn)
  */
 export function getAdminCookieHeader(token: string): string {
   const isProd = process.env.NODE_ENV === "production";
   return `${COOKIE_ADMIN_NAME}=${encodeURIComponent(
     token
-  )}; Path=/; Max-Age=${ADMIN_MAX_AGE_SECONDS}; HttpOnly; SameSite=Lax${
+  )}; Path=/; HttpOnly; SameSite=Lax${
     isProd ? "; Secure" : ""
   }`;
 }
@@ -330,5 +330,5 @@ export function getAdminCookieHeader(token: string): string {
  * Xóa Cookie Quản trị viên
  */
 export function getClearAdminCookieHeader(): string {
-  return `${COOKIE_ADMIN_NAME}=; Path=/; Max-Age=0; HttpOnly; SameSite=Lax`;
+  return `${COOKIE_ADMIN_NAME}=; Path=/; Expires=Thu, 01 Jan 1970 00:00:00 GMT; Max-Age=0; HttpOnly; SameSite=Lax`;
 }
